@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Chuck (Yellow Bird) — triangular/speed shape -->
+  <!-- Tail feathers -->
+  <path d="M10 68 L22 58 L18 72 Z" fill="#d4ac0d"/>
+  <path d="M6 78 L20 65 L14 82 Z" fill="#f1c40f"/>
+  <path d="M12 86 L24 74 L20 90 Z" fill="#d4ac0d"/>
+  <!-- Body triangle -->
+  <polygon points="28,90 72,90 85,50 50,12 15,50" fill="#f1c40f"/>
+  <!-- Belly -->
+  <ellipse cx="50" cy="74" rx="20" ry="14" fill="#f9e4a0"/>
+  <!-- Chest highlight -->
+  <ellipse cx="44" cy="58" rx="14" ry="12" fill="#f7dc6f" opacity="0.6"/>
+  <!-- Wing left -->
+  <path d="M20 60 Q10 50 18 40 Q26 52 28 62 Z" fill="#d4ac0d"/>
+  <!-- Wing right -->
+  <path d="M80 60 Q90 50 82 40 Q74 52 72 62 Z" fill="#d4ac0d"/>
+  <!-- Eyes white -->
+  <ellipse cx="40" cy="44" rx="11" ry="10" fill="white"/>
+  <ellipse cx="62" cy="44" rx="11" ry="10" fill="white"/>
+  <!-- Angry brows -->
+  <path d="M29 36 Q40 28 51 35" fill="none" stroke="#1a0505" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M50 35 Q62 28 72 36" fill="none" stroke="#1a0505" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Pupils -->
+  <circle cx="40" cy="46" r="5.5" fill="#1a0505"/>
+  <circle cx="62" cy="46" r="5.5" fill="#1a0505"/>
+  <!-- Eye shine -->
+  <circle cx="42" cy="44" r="2" fill="white"/>
+  <circle cx="64" cy="44" r="2" fill="white"/>
+  <!-- Beak -->
+  <path d="M44 58 L50 52 L56 58 L53 64 L47 64 Z" fill="#e67e22"/>
+  <path d="M44 58 L50 56 L56 58" fill="#d35400" stroke="none"/>
+</svg>

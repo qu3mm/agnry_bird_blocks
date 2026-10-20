@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Body -->
+  <circle cx="50" cy="56" r="36" fill="#c0392b"/>
+  <!-- Belly -->
+  <ellipse cx="50" cy="67" rx="22" ry="16" fill="#e8cdb0"/>
+  <!-- Head crest feathers -->
+  <path d="M38 26 L42 10 L47 24" fill="#922b21" stroke="#7b241c" stroke-width="1"/>
+  <path d="M44 22 L50 6 L55 21" fill="#e74c3c" stroke="#c0392b" stroke-width="1"/>
+  <path d="M52 24 L58 12 L62 26" fill="#922b21" stroke="#7b241c" stroke-width="1"/>
+  <!-- White eye bg -->
+  <ellipse cx="40" cy="46" rx="11" ry="10" fill="white"/>
+  <ellipse cx="61" cy="46" rx="11" ry="10" fill="white"/>
+  <!-- Angry brow shadow -->
+  <path d="M30 37 Q40 32 51 38" fill="none" stroke="#4a1010" stroke-width="5" stroke-linecap="round"/>
+  <path d="M50 38 Q61 32 71 37" fill="none" stroke="#4a1010" stroke-width="5" stroke-linecap="round"/>
+  <!-- Brow -->
+  <path d="M30 36 Q40 30 51 37" fill="none" stroke="#1a0505" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M50 37 Q61 30 71 36" fill="none" stroke="#1a0505" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Pupils -->
+  <circle cx="40" cy="48" r="5.5" fill="#1a0505"/>
+  <circle cx="61" cy="48" r="5.5" fill="#1a0505"/>
+  <!-- Eye shine -->
+  <circle cx="42" cy="46" r="2" fill="white"/>
+  <circle cx="63" cy="46" r="2" fill="white"/>
+  <!-- Beak -->
+  <path d="M43 60 L50 54 L57 60 L54 68 L46 68 Z" fill="#f39c12"/>
+  <path d="M43 60 L50 58 L57 60" fill="#e67e22" stroke="none"/>
+  <!-- Tail -->
+  <path d="M14 70 Q8 80 16 82 Q22 76 20 68 Z" fill="#922b21"/>
+  <path d="M10 75 Q2 82 12 88 Q20 80 16 72 Z" fill="#c0392b"/>
+</svg>

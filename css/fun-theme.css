@@ -1,0 +1,1506 @@
+/* ============================================================
+   ANGRY BIRDS THEME
+   Sky blue world · Red bird energy · Yellow slingshot pop
+   ============================================================ */
+
+/* ── Sky background & 100vh Screen Lock ── */
+html, body {
+    height: 100vh !important;
+    max-height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    background: linear-gradient(180deg, #87ceeb 0%, #b0e0f7 55%, #d4f1a0 100%) !important;
+    background-attachment: fixed !important;
+    font-family: 'Nunito', 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}
+
+button, input, select, textarea {
+    font-family: inherit;
+}
+
+#root, .app-container {
+    height: 100vh !important;
+    max-height: 100vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+}
+
+/* ── Header: Solid rich warm wood plank ── */
+.site-header {
+    background: linear-gradient(180deg, #532d10 0%, #3e1f08 100%) !important;
+    border-bottom: 3px solid #231103 !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45) !important;
+    padding: 4px 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    min-height: 48px !important;
+    max-height: 52px !important;
+    flex-shrink: 0 !important;
+    overflow: visible !important;
+    gap: 16px !important;
+}
+
+.header-left {
+    display: flex !important;
+    align-items: center !important;
+    flex-shrink: 0 !important;
+}
+
+.header-center {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    justify-content: center !important;
+    flex: 1 1 auto !important;
+}
+
+.tier-pills-bar {
+    display: flex !important;
+    align-items: center !important;
+    gap: 3px !important;
+    background: rgba(35, 17, 4, 0.8) !important;
+    padding: 2px !important;
+    border-radius: 12px !important;
+    border: 1px solid #78350f !important;
+}
+
+.tier-pill-opt {
+    padding: 3px 8px !important;
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    border-radius: 9px !important;
+    color: #e5e7eb !important;
+    background: transparent !important;
+    border: none !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+}
+
+.tier-pill-opt:hover {
+    color: #ffd233 !important;
+}
+
+.tier-pill-opt.active {
+    background: #ffc400 !important;
+    color: #3e1b04 !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4) !important;
+}
+
+.brand-badge {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    font-size: 16px !important;
+    font-weight: 900 !important;
+    color: #ffe066 !important;
+    text-shadow: 0 2px 0 #2e1707, 0 3px 6px rgba(0, 0, 0, 0.6) !important;
+    letter-spacing: 0.5px !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+}
+
+.brand-icon {
+    background: transparent !important;
+    box-shadow: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 32px !important;
+    height: 32px !important;
+    animation: birdBob 1.8s ease-in-out infinite alternate !important;
+}
+
+@keyframes birdPulse {
+    from { box-shadow: 0 0 6px rgba(230,50,50,0.5); transform: scale(1); }
+    to   { box-shadow: 0 0 18px rgba(230,50,50,0.9); transform: scale(1.07); }
+}
+
+@keyframes birdBob {
+    from { transform: translateY(0) rotate(-4deg); }
+    to   { transform: translateY(-5px) rotate(4deg); }
+}
+
+/* ── Level Bubbles: Clean Single Row, No Wrapping, No Scrollbar ── */
+.level-nav-container {
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    flex-wrap: nowrap !important;
+    max-width: none !important;
+    overflow: visible !important;
+    padding: 2px 0 !important;
+}
+
+.level-bubble {
+    width: 24px !important;
+    height: 24px !important;
+    min-width: 24px !important;
+    border-radius: 50% !important;
+    border: 2px solid #5a9e2f !important;
+    background: #e2f7b8 !important;
+    color: #275210 !important;
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.25) !important;
+    padding: 0 !important;
+    line-height: 1 !important;
+}
+
+/* Tier specific bubble colors */
+.level-bubble.tier-bubble-easy {
+    border-color: #48bb78 !important;
+    background: #dcfce7 !important;
+    color: #14532d !important;
+}
+.level-bubble.tier-bubble-medium {
+    border-color: #f59e0b !important;
+    background: #fef3c7 !important;
+    color: #78350f !important;
+}
+.level-bubble.tier-bubble-hard {
+    border-color: #ef4444 !important;
+    background: #fee2e2 !important;
+    color: #7f1d1d !important;
+}
+
+.level-bubble:hover {
+    border-color: #ffffff !important;
+    color: #ffffff !important;
+    background: #e63232 !important;
+    transform: scale(1.08) translateY(-1px) !important;
+    box-shadow: 0 4px 10px rgba(230, 50, 50, 0.6) !important;
+    z-index: 2 !important;
+}
+
+.level-bubble.active {
+    background: linear-gradient(135deg, #e63232, #b91c1c) !important;
+    border-color: #ffffff !important;
+    color: #ffffff !important;
+    transform: scale(1.28) !important;
+    box-shadow: 0 0 0 2px #ffe066, 0 4px 12px rgba(230, 50, 50, 0.7) !important;
+    font-weight: 900 !important;
+    z-index: 3 !important;
+}
+
+/* ── Header Right: Actions & Countdown Pill ── */
+.header-right {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+}
+
+/* ── Timer: Slingshot wood capsule ── */
+.timer-pill-container {
+    background: #231104 !important;
+    border: 2px solid #532d10 !important;
+    border-radius: 20px !important;
+    padding: 3px 8px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6) !important;
+}
+
+.timer-label {
+    color: #fbd38d !important;
+    font-size: 11px !important;
+    font-weight: 800 !important;
+}
+
+.timer-clock {
+    color: #ffe066 !important;
+    background: #120701 !important;
+    border: 1px solid #3d1f08 !important;
+    border-radius: 6px !important;
+    padding: 1px 6px !important;
+    font-family: monospace, sans-serif !important;
+    font-size: 12px !important;
+    font-weight: 900 !important;
+    text-shadow: 0 0 6px rgba(255, 224, 102, 0.6) !important;
+}
+
+.timer-progress-track {
+    width: 40px !important;
+    height: 5px !important;
+    background: #120701 !important;
+    border-radius: 3px !important;
+    overflow: hidden !important;
+}
+
+.timer-progress-fill {
+    height: 100% !important;
+    background: linear-gradient(90deg, #e63232, #ffe066) !important;
+}
+
+/* ── Header Buttons: Friendly 3D Pills ── */
+.header-btn {
+    background: #e2f7b8 !important;
+    color: #275210 !important;
+    border: 1.5px solid #5a9e2f !important;
+    border-radius: 18px !important;
+    padding: 4px 10px !important;
+    font-size: 11.5px !important;
+    font-weight: 800 !important;
+    box-shadow: 0 2px 0 #3d721e !important;
+    transition: all 0.15s ease !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+}
+
+.header-btn:hover {
+    transform: translateY(-2px) !important;
+    background: #5a9e2f !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25) !important;
+}
+
+.header-btn:active {
+    transform: translateY(1px) !important;
+    box-shadow: 0 1px 0 #3d721e !important;
+}
+
+.header-btn.btn-test {
+    background: linear-gradient(135deg, #ffb703, #fb8500) !important;
+    color: #ffffff !important;
+    border-color: #d46b08 !important;
+    box-shadow: 0 2px 0 #994800 !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+}
+
+.header-btn.btn-test:hover {
+    background: linear-gradient(135deg, #ffc324, #ffa012) !important;
+    box-shadow: 0 4px 10px rgba(251, 133, 0, 0.45) !important;
+}
+
+
+/* ── Instruction Banner ── */
+.instruction-banner {
+    background: linear-gradient(135deg, #fff9e6, #fffde7);
+    border-bottom: 3px solid #f5a623;
+    box-shadow: 0 2px 12px rgba(245,166,35,0.25);
+}
+
+.instruction-bubble {
+    background: #fffde7;
+    border-color: #f5a623;
+    border-radius: 16px;
+}
+
+.instruction-bubble::before {
+    border-color: transparent #f5a623 transparent transparent;
+}
+
+.instruction-bubble::after {
+    border-color: transparent #fffde7 transparent transparent;
+}
+
+/* ── Run / Reset Buttons ── */
+.btn-run {
+    background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+    border-radius: 50px !important;
+    font-size: 18px !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.5px;
+    box-shadow: 0 6px 0 #166534, 0 8px 20px rgba(34,197,94,0.4) !important;
+    transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.btn-run:hover {
+    transform: translateY(-4px) scale(1.06) !important;
+    box-shadow: 0 10px 0 #166534, 0 14px 28px rgba(34,197,94,0.5) !important;
+}
+
+.btn-run:active {
+    transform: translateY(2px) scale(0.97) !important;
+    box-shadow: 0 2px 0 #166534, 0 4px 12px rgba(34,197,94,0.4) !important;
+}
+
+.btn-run.btn-reset {
+    background: linear-gradient(135deg, #e63232, #b91c1c) !important;
+    box-shadow: 0 6px 0 #7f1d1d, 0 8px 20px rgba(230,50,50,0.4) !important;
+}
+
+.btn-run.btn-reset:hover {
+    box-shadow: 0 10px 0 #7f1d1d, 0 14px 28px rgba(230,50,50,0.5) !important;
+}
+
+/* ── Workspace & Toolbox: wood crate ── */
+.stage-left-panel,
+.stage-right-panel {
+    background: #f5e6c8;
+    border: 3px solid #8b5e3c;
+    border-radius: 8px;
+    box-shadow: inset 0 0 20px rgba(139,94,60,0.15);
+}
+
+.toolbox-header {
+    color: #5c3317 !important;
+    font-weight: 900 !important;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-shadow: 0 1px 0 rgba(255,255,255,0.5);
+}
+
+.workspace-canvas {
+    background: #fdf3e3 !important;
+    background-image:
+        linear-gradient(rgba(139,94,60,0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(139,94,60,0.08) 1px, transparent 1px) !important;
+    background-size: 24px 24px !important;
+    border: 2px dashed #c8956c !important;
+}
+
+/* ── Modals ── */
+.modal-card {
+    background: #fff;
+    border-radius: 20px !important;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.45), 0 0 0 4px #e63232 !important;
+    animation: slingshot 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+    overflow: hidden;
+}
+
+@keyframes slingshot {
+    0%   { transform: scale(0.5) translateY(40px); opacity: 0; }
+    70%  { transform: scale(1.07) translateY(-6px); opacity: 1; }
+    100% { transform: scale(1) translateY(0); }
+}
+
+.modal-header {
+    border-radius: 0 !important;
+    padding: 20px 24px !important;
+}
+
+.modal-footer {
+    background: #fff9e6 !important;
+    border-top: 3px solid #f5a623 !important;
+    border-radius: 0 !important;
+}
+
+/* ── Pre-Test header ── */
+.pretest-header {
+    background: linear-gradient(135deg, #e63232, #b91c1c, #f5a623) !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.pretest-header::after {
+    content: '🐦 🐷 🪺 💥 ⭐';
+    position: absolute;
+    top: -4px;
+    right: 16px;
+    font-size: 20px;
+    opacity: 0.55;
+    letter-spacing: 4px;
+}
+
+/* ── Feeling Cards ── */
+.feeling-card {
+    border: 2px solid #f5a623;
+    background: #fffde7;
+    border-radius: 14px !important;
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    cursor: pointer;
+}
+
+.feeling-card:hover {
+    border-color: #e63232;
+    background: #fff0f0;
+    transform: translateY(-5px) scale(1.06);
+    box-shadow: 0 8px 20px rgba(230,50,50,0.25);
+}
+
+.feeling-option input:checked + .feeling-card {
+    border-color: #e63232 !important;
+    background: linear-gradient(135deg, #e63232, #b91c1c) !important;
+    color: #fff;
+    box-shadow: 0 0 16px rgba(230,50,50,0.55);
+    transform: translateY(-4px) scale(1.07);
+}
+
+.feeling-option input:checked + .feeling-card .label {
+    color: #fff !important;
+}
+
+.feeling-card .emoji {
+    font-size: 30px !important;
+}
+
+/* ── Quiz Options ── */
+.quiz-option-item {
+    border: 2px solid #f5a623;
+    background: #fffde7;
+    border-radius: 12px !important;
+    transition: all 0.18s ease;
+}
+
+.quiz-option-item:hover {
+    border-color: #e63232;
+    background: #fff0f0;
+    transform: translateX(5px);
+}
+
+/* ── Primary / Secondary Buttons ── */
+.btn-primary {
+    background: linear-gradient(135deg, #e63232, #b91c1c) !important;
+    border-radius: 50px !important;
+    font-size: 15px !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.3px;
+    box-shadow: 0 6px 0 #7f1d1d, 0 8px 20px rgba(230,50,50,0.35) !important;
+    transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-3px) scale(1.04) !important;
+    box-shadow: 0 9px 0 #7f1d1d, 0 12px 28px rgba(230,50,50,0.5) !important;
+}
+
+.btn-primary:active {
+    transform: translateY(2px) !important;
+    box-shadow: 0 2px 0 #7f1d1d !important;
+}
+
+.btn-primary:disabled {
+    background: #ccc !important;
+    box-shadow: 0 4px 0 #999 !important;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.btn-secondary {
+    border-radius: 50px !important;
+    font-weight: 700 !important;
+    background: #f5e6c8 !important;
+    border: 2px solid #8b5e3c !important;
+    color: #5c3317 !important;
+    transition: all 0.18s ease !important;
+}
+
+.btn-secondary:hover {
+    transform: translateY(-2px) !important;
+    background: #e0ccaa !important;
+}
+
+/* ── Form Section Titles ── */
+.form-section-title {
+    color: #b91c1c !important;
+    font-size: 15px !important;
+    font-weight: 800 !important;
+}
+
+.form-section-title span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: linear-gradient(135deg, #e63232, #b91c1c);
+    color: #fff;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: 900;
+    margin-right: 4px;
+    box-shadow: 0 2px 0 #7f1d1d;
+}
+
+/* ── Textarea & Input ── */
+.form-textarea,
+input[type="text"].form-textarea {
+    border: 2px solid #f5a623 !important;
+    border-radius: 12px !important;
+    font-family: inherit;
+    background: #fffde7;
+    transition: border-color 0.18s, box-shadow 0.18s;
+}
+
+.form-textarea:focus,
+input[type="text"].form-textarea:focus {
+    border-color: #e63232 !important;
+    box-shadow: 0 0 0 3px rgba(230,50,50,0.15) !important;
+    outline: none;
+}
+
+/* ── Concept Pills ── */
+.concept-pill span {
+    background: #fffde7 !important;
+    border-color: #f5a623 !important;
+    color: #7a4420 !important;
+    border-radius: 20px !important;
+    font-weight: 700 !important;
+}
+
+.concept-pill input:checked + span {
+    background: linear-gradient(135deg, #e63232, #b91c1c) !important;
+    color: #fff !important;
+    border-color: #e63232 !important;
+    box-shadow: 0 0 10px rgba(230,50,50,0.4);
+}
+
+/* ── Game Toast ── */
+.game-toast {
+    background: linear-gradient(135deg, #5c3317, #3a1f0a) !important;
+    border: 2px solid #ffe066 !important;
+    box-shadow: 0 0 24px rgba(255,224,102,0.5) !important;
+    font-size: 14px !important;
+    font-weight: 800 !important;
+    border-radius: 30px !important;
+    color: #ffe066 !important;
+}
+
+/* ── Modal overlay ── */
+.modal-overlay {
+    background: rgba(60, 20, 5, 0.8) !important;
+    backdrop-filter: blur(4px) !important;
+}
+
+/* ── Check-in modal header ── */
+.checkin-modal .modal-header {
+    background: linear-gradient(135deg, #ffe066, #f5a623, #e6950a) !important;
+    color: #5c3317 !important;
+    box-shadow: 0 4px 0 #b8860b;
+}
+
+.checkin-modal .modal-header h3,
+.checkin-modal .modal-header span {
+    color: #5c3317 !important;
+}
+
+/* ── Win modal header ── */
+.win-header {
+    background: linear-gradient(135deg, #ffe066, #f5a623, #22c55e) !important;
+}
+
+/* ── Star bounce for win modal ── */
+.win-stars {
+    animation: starBounce 0.6s ease-in-out;
+}
+
+@keyframes starBounce {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    50%       { transform: scale(1.4) rotate(15deg); }
+}
+
+/* ── Workspace Header Bar ── */
+.workspace-header-bar {
+    background: #8b5e3c !important;
+    border-color: #5c3317 !important;
+    border-bottom: 3px solid #5c3317 !important;
+    background-image: repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 40px,
+        rgba(0,0,0,0.07) 40px,
+        rgba(0,0,0,0.07) 42px
+    ) !important;
+}
+
+.workspace-header-bar .toolbox-header {
+    color: #ffe066 !important;
+}
+
+.btn-header-action {
+    background: #f5e6c8 !important;
+    color: #5c3317 !important;
+    border: 2px solid #8b5e3c !important;
+    border-radius: 20px !important;
+    font-weight: 800 !important;
+    transition: all 0.18s ease !important;
+    box-shadow: 0 3px 0 #5c3317 !important;
+}
+
+.btn-header-action:hover {
+    background: #ffe066 !important;
+    color: #5c3317 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 5px 0 #5c3317, 0 6px 12px rgba(0,0,0,0.2) !important;
+}
+
+/* ── Interactive Drag to Delete / Trash Can ── */
+.trash-zone {
+    position: absolute !important;
+    bottom: 18px !important;
+    right: 18px !important;
+    width: auto !important;
+    min-width: 60px !important;
+    height: 52px !important;
+    padding: 6px 16px !important;
+    border-radius: 28px !important;
+    background: linear-gradient(135deg, #78350f, #451a03) !important;
+    border: 3px solid #b45309 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    font-size: 20px !important;
+    color: #fef3c7 !important;
+    pointer-events: none !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,0.15) !important;
+    opacity: 0.65 !important;
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+    z-index: 100 !important;
+}
+
+.trash-zone .trash-label {
+    font-size: 13px !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.5px !important;
+    text-transform: uppercase !important;
+    color: #fde68a !important;
+    display: inline-block !important;
+}
+
+/* When dragging begins */
+.workspace-dragging-active .trash-zone {
+    opacity: 0.95 !important;
+    transform: scale(1.06) !important;
+    border-color: #f59e0b !important;
+    box-shadow: 0 6px 18px rgba(245, 158, 11, 0.4) !important;
+}
+
+/* Hovering over the trash can directly */
+.trash-zone.trash-active {
+    opacity: 1 !important;
+    transform: scale(1.2) rotate(-3deg) !important;
+    background: linear-gradient(135deg, #dc2626, #991b1b) !important;
+    border-color: #f87171 !important;
+    box-shadow: 0 0 25px rgba(239, 68, 68, 0.75), 0 8px 20px rgba(0,0,0,0.4) !important;
+    animation: trashWobble 0.3s ease-in-out infinite alternate !important;
+}
+
+.trash-zone.trash-active .trash-label {
+    color: #ffffff !important;
+}
+
+@keyframes trashWobble {
+    from { transform: scale(1.2) rotate(-4deg); }
+    to   { transform: scale(1.2) rotate(4deg); }
+}
+
+/* Toolbox highlight when dragging a block back towards it */
+.toolbox-column.toolbox-trash-active {
+    background: rgba(239, 68, 68, 0.2) !important;
+    border: 2.5px dashed #dc2626 !important;
+    box-shadow: inset 0 0 24px rgba(220, 38, 38, 0.35) !important;
+    transition: all 0.15s ease !important;
+}
+
+/* Ghost block red warning tint when hovering over trash */
+.block-stack-dragging.drag-over-trash .block-shape {
+    border-color: #ef4444 !important;
+    opacity: 0.75 !important;
+    transform: scale(0.92) !important;
+    filter: grayscale(0.4) contrast(1.2) drop-shadow(0 0 12px rgba(239, 68, 68, 0.65)) !important;
+}
+
+/* ── Welcome Banner Modal ── */
+.welcome-modal-card {
+    border-radius: 24px !important;
+    border: 4px solid #b45309 !important;
+    box-shadow: 0 30px 70px rgba(0,0,0,0.55), 0 0 0 5px #ffe066 !important;
+    animation: slingshot 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+/* ==========================================================================
+   ANGRY BIRDS CODE LAB - 3-PANEL DISCRETE LAYOUT DESIGN
+   Matches exact reference design from media_1792388341777_a99bd2fd.png
+   ========================================================================== */
+
+/* ── Top Header Brand ── */
+.brand-badge-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.brand-icon-box {
+    width: 38px;
+    height: 38px;
+    background: linear-gradient(135deg, #e11d48, #be123c);
+    border-radius: 10px;
+    border: 2px solid #fda4af;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.4);
+    animation: birdBob 2s ease-in-out infinite alternate;
+}
+
+.brand-icon-box img {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+}
+
+.brand-text-column {
+    display: flex;
+    flex-direction: column;
+}
+
+.brand-title-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.brand-text-gold {
+    color: #facc15;
+    font-weight: 900;
+    font-size: 16px;
+    letter-spacing: 0.5px;
+    text-shadow: 0 2px 0 #3a1d06;
+}
+
+.brand-pill-badge {
+    background: #dc2626;
+    color: #ffffff;
+    font-size: 10.5px;
+    font-weight: 900;
+    padding: 2.5px 8.5px;
+    border-radius: 6px;
+    border: 1px solid #f87171;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+}
+
+.brand-subtext {
+    color: #fef08a;
+    font-size: 11px;
+    font-weight: 700;
+    opacity: 0.9;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+}
+
+/* ── Level Navigation Circles ── */
+.level-nav-container {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 8px;
+}
+
+.level-bubble-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+}
+
+.level-bubble {
+    width: 24px !important;
+    height: 24px !important;
+    min-width: 24px !important;
+    border-radius: 50% !important;
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    box-shadow: 0 2px 0 rgba(0,0,0,0.35) !important;
+}
+
+.level-bubble.active {
+    background: linear-gradient(135deg, #16a34a, #15803d) !important;
+    border: 2px solid #ffffff !important;
+    box-shadow: 0 0 0 2px #facc15, 0 4px 10px rgba(0,0,0,0.5) !important;
+    transform: scale(1.05) !important;
+}
+
+.level-bubble.locked {
+    opacity: 0.45 !important;
+    filter: grayscale(0.8) !important;
+    cursor: not-allowed !important;
+}
+
+/* ── Header Right SFX & Cadet Pill ── */
+.header-sfx-btn {
+    background: #14532d;
+    color: #86efac;
+    border: 1.5px solid #22c55e;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 4px 12px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    box-shadow: 0 2px 0 #052e16;
+    transition: all 0.15s ease;
+}
+
+.header-sfx-btn:hover {
+    background: #16a34a;
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.header-sfx-btn.muted {
+    background: #451a03;
+    color: #f87171;
+    border-color: #ef4444;
+}
+
+.cadet-profile-pill {
+    background: #2b1404;
+    border: 1.5px solid #78350f;
+    border-radius: 20px;
+    padding: 3px 12px 3px 6px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: #fef08a;
+    font-size: 12px;
+    font-weight: 800;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+}
+
+.cadet-avatar-circle {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #fee2e2;
+    border: 1.5px solid #ef4444;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cadet-avatar-circle img {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+}
+
+/* ── Mission / Instruction Banner Card ── */
+.instruction-banner-card {
+    background: #ffffff;
+    border: 2.5px solid #38bdf8;
+    border-radius: 14px;
+    margin: 4px 16px 6px 16px;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    box-shadow: 0 4px 14px rgba(56, 189, 248, 0.2);
+    flex-shrink: 0 !important;
+}
+
+.instruction-avatar-wrap {
+    position: relative;
+    flex-shrink: 0;
+    width: 68px;
+    height: 68px;
+    isolation: isolate;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: visible;
+}
+
+.instruction-avatar-wrap .avatar-circle {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: #fee2e2;
+    border: 3px solid #ef4444;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden !important;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.18);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.instruction-avatar-wrap .avatar-circle img {
+    width: 44px;
+    height: 44px;
+    object-fit: contain;
+}
+
+.avatar-lvl-badge {
+    position: absolute !important;
+    bottom: 0px !important;
+    right: -4px !important;
+    z-index: 50 !important;
+    background: #f1b31c !important;
+    color: #451a03 !important;
+    font-size: 11px !important;
+    font-weight: 900 !important;
+    padding: 1.5px 7px !important;
+    border-radius: 9999px !important;
+    border: 2px solid #78350f !important;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.35) !important;
+    white-space: nowrap !important;
+    line-height: 1.1 !important;
+    pointer-events: none;
+}
+
+.instruction-body {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.mission-pill-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.pill-badge {
+    font-size: 12px;
+    font-weight: 800;
+    padding: 4px 12px;
+    border-radius: 8px;
+    letter-spacing: 0.3px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+}
+
+.pill-badge.pill-mission {
+    background: #fee2e2;
+    color: #dc2626;
+    border: 1.5px solid #f87171;
+}
+
+.pill-badge.pill-target {
+    background: #e0f2fe;
+    color: #0284c7;
+    border: 1.5px solid #7dd3fc;
+}
+
+.pill-badge.pill-mastery {
+    background: #fef3c7;
+    color: #d97706;
+    border: 1.5px solid #fcd34d;
+}
+
+.instruction-speech-bubble {
+    flex: 1 1 auto;
+    min-width: 0;
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 7px 14px;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.instruction-text-styled {
+    font-family: 'Nunito', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+    font-size: 14.5px !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
+    line-height: 1.6 !important;
+    letter-spacing: 0.15px !important;
+    margin: 0;
+}
+
+.inline-block-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    font-weight: 800;
+    margin: 0 4px;
+    vertical-align: middle;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.14);
+}
+
+.inline-block-chip.chip-blue {
+    background: #0284c7;
+    color: #ffffff;
+    border: 1px solid #0369a1;
+}
+
+.inline-block-chip.chip-orange {
+    background: #ea580c;
+    color: #ffffff;
+    border: 1px solid #c2410c;
+}
+
+.inline-block-chip.chip-pink {
+    background: #e11d48;
+    color: #ffffff;
+    border: 1px solid #be123c;
+}
+
+.instruction-message-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.btn-banner-action {
+    padding: 7px 14px;
+    border-radius: 10px;
+    font-weight: 900;
+    font-size: 12.5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.15s ease;
+}
+
+.btn-banner-action.btn-read-aloud {
+    background: linear-gradient(135deg, #facc15, #eab308);
+    color: #451a03;
+    border: 1.5px solid #ca8a04;
+    box-shadow: 0 3px 0 #a16207;
+}
+
+.btn-banner-action.btn-read-aloud:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 0 #a16207;
+}
+
+.btn-banner-action.btn-tips {
+    background: linear-gradient(135deg, #fb923c, #f97316);
+    color: #ffffff;
+    border: 1.5px solid #ea580c;
+    box-shadow: 0 3px 0 #c2410c;
+}
+
+.btn-banner-action.btn-tips:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 0 #c2410c;
+}
+
+/* ── 3-Panel Main Layout Perfect Screen Alignment ── */
+.main-stage-container {
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    overflow: hidden !important;
+    padding: 0 16px 12px 16px !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.col-wood-card {
+    height: 100% !important;
+    max-height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.col-header-bar {
+    padding: 8px 18px !important;
+    min-height: 44px !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+}
+
+/* ── Toolbox Categories ── */
+.toolbox-category-section {
+    margin-bottom: 16px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.toolbox-category-header {
+    font-size: 11.5px;
+    font-weight: 900;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    padding: 6px 10px;
+    border-bottom: 1.5px solid rgba(0,0,0,0.08);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.cat-movement .toolbox-category-header {
+    color: #0284c7;
+}
+
+.cat-combat .toolbox-category-header {
+    color: #dc2626;
+}
+
+.cat-logic .toolbox-category-header {
+    color: #d97706;
+}
+
+.toolbox-category-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 4px 6px 8px 6px;
+}
+
+.toolbox-category-list .block-prototype {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    margin-bottom: 0 !important;
+    display: block !important;
+}
+
+.toolbox-category-list .block-shape {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    min-width: 0 !important;
+}
+
+.block-shape {
+    font-family: 'Nunito', 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
+}
+
+.block-prototype .block-content {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 12px !important;
+    padding: 12px 18px !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+}
+
+.block-prototype .block-icon {
+    flex-shrink: 0 !important;
+    margin-right: 4px !important;
+    font-size: 15px !important;
+}
+
+.block-prototype .block-label {
+    flex-shrink: 0 !important;
+    font-size: 14px !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.25px !important;
+}
+
+.block-prototype .block-select-wrap {
+    margin-left: auto !important;
+    flex-shrink: 0 !important;
+}
+
+.block-select.block-param-turn {
+    padding: 4px 22px 4px 10px !important;
+    font-size: 13px !important;
+    font-weight: 800 !important;
+    border-radius: 5px !important;
+}
+
+/* ── Block Styling with Tags and Notches ── */
+.block-shape.block-blue {
+    background: linear-gradient(180deg, #0284c7 0%, #0369a1 100%) !important;
+    border: 1.5px solid #075985 !important;
+    border-radius: 6px !important;
+    min-width: 145px;
+}
+
+.block-shape.block-combat {
+    background: linear-gradient(180deg, #dc2626 0%, #b91c1c 100%) !important;
+    border: 1.5px solid #991b1b !important;
+    border-radius: 6px !important;
+    min-width: 145px;
+}
+
+.block-tag-tile {
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    background: rgba(255, 255, 255, 0.28) !important;
+    padding: 3px 9px !important;
+    border-radius: 5px !important;
+    margin-left: auto !important;
+    flex-shrink: 0 !important;
+    letter-spacing: 0.2px !important;
+}
+
+.block-tag-pro {
+    font-size: 11px !important;
+    font-weight: 900 !important;
+    background: #facc15 !important;
+    color: #451a03 !important;
+    padding: 2px 8px !important;
+    border-radius: 5px !important;
+    margin-left: auto !important;
+    flex-shrink: 0 !important;
+    letter-spacing: 0.3px !important;
+}
+
+.block-badge-pig {
+    background: rgba(255, 255, 255, 0.25);
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+/* Bottom tab colors matching the gradient themes */
+.block-when-run .block-notch-bottom {
+    background-color: var(--block-orange) !important;
+}
+
+.block-blue .block-notch-bottom {
+    background-color: #0369a1 !important;
+}
+
+.block-combat .block-notch-bottom {
+    background-color: #b91c1c !important;
+}
+
+.toolbox-category-list .block-notch-top::after {
+    background: #fbf8f2 !important;
+}
+
+/* ── Workspace Drop Slot Placeholder ── */
+.block-drop-placeholder {
+    border: 2px dashed #16a34a !important;
+    background: rgba(34, 197, 94, 0.14) !important;
+    color: #15803d !important;
+    font-family: 'Nunito', 'Plus Jakarta Sans', system-ui, sans-serif !important;
+    font-weight: 800 !important;
+    font-size: 13px !important;
+    letter-spacing: 0.25px !important;
+    padding: 9px 18px !important;
+    border-radius: 8px !important;
+    margin-top: 4px !important;
+    text-align: center !important;
+    cursor: pointer !important;
+    user-select: none !important;
+    transition: all 0.2s ease !important;
+    display: block !important;
+    width: fit-content !important;
+}
+
+.block-drop-placeholder:hover {
+    background: rgba(34, 197, 94, 0.22) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* ── Workspace Trash Bin in Bottom Right ── */
+.trash-zone {
+    position: absolute !important;
+    bottom: 16px !important;
+    right: 16px !important;
+    width: auto !important;
+    min-width: 110px !important;
+    height: 48px !important;
+    padding: 6px 14px !important;
+    border-radius: 12px !important;
+    background: linear-gradient(135deg, #78350f, #451a03) !important;
+    border: 2.5px solid #d97706 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+    cursor: pointer !important;
+    pointer-events: none !important;
+    z-index: 100 !important;
+}
+
+.main-stage-container > .grid > .col-workspace {
+    width: calc(100% - 8px);
+    margin-left: 8px;
+}
+
+@media (max-width: 1368px) {
+    .site-header {
+        flex-wrap: wrap !important;
+        max-height: none !important;
+    }
+
+    .header-left,
+    .header-right {
+        flex: 1 1 100% !important;
+        width: 100%;
+        min-width: 0;
+    }
+
+    .header-left {
+        justify-content: space-between;
+    }
+
+    .header-right {
+        justify-content: space-between;
+        flex-wrap: wrap !important;
+    }
+
+    .header-actions-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+}
+
+@media (max-width: 1100px) {
+    html,
+    body {
+        height: auto !important;
+        max-height: none !important;
+        min-height: 100% !important;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+    }
+
+    #root,
+    .app-container {
+        height: auto !important;
+        max-height: none !important;
+        min-height: 100vh !important;
+        overflow: visible !important;
+    }
+
+    .main-stage-container {
+        flex: 1 0 auto !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+
+    .main-stage-container > .grid {
+        flex: 0 0 auto;
+        height: auto !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    }
+
+    .main-stage-container > .grid > .col-wood-card {
+        height: auto !important;
+        max-height: none !important;
+        min-height: 475px;
+        min-width: 0;
+    }
+
+    .col-workspace > .col-header-bar {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .col-workspace #workspace-block-count {
+        flex: 1 1 100%;
+        min-width: 0;
+        white-space: normal;
+        line-height: 1.25;
+    }
+
+    .col-workspace > .col-header-bar > div {
+        width: 100%;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 800px) {
+    html,
+    body {
+        height: auto !important;
+        max-height: none !important;
+        min-height: 100% !important;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+    }
+
+    #root,
+    .app-container {
+        height: auto !important;
+        max-height: none !important;
+        min-height: 100vh !important;
+        overflow: visible !important;
+    }
+
+    .header-left {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+    }
+
+    .brand-badge-container {
+        flex: 1 1 100%;
+        min-width: 0;
+    }
+
+    .brand-text-column {
+        min-width: 0;
+    }
+
+    .brand-subtext {
+        white-space: normal;
+    }
+
+    .level-nav-container {
+        max-width: 100%;
+        overflow-x: auto !important;
+    }
+
+    .header-right {
+        justify-content: flex-start;
+    }
+
+    .header-actions-group {
+        width: 100%;
+    }
+
+    .instruction-banner-card {
+        flex-wrap: wrap;
+    }
+
+    .instruction-body {
+        min-width: 0;
+    }
+
+    .main-stage-container {
+        flex: 0 0 auto !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+
+    .main-stage-container > .grid {
+        height: auto !important;
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 12px !important;
+    }
+
+    .col-resize-splitter {
+        display: none !important;
+    }
+
+    .main-stage-container > .grid > .col-wood-card {
+        height: auto !important;
+        max-height: none !important;
+    }
+
+    .col-maze {
+        min-height: 500px !important;
+    }
+
+    .col-toolbox,
+    .col-workspace {
+        min-height: 400px !important;
+    }
+
+    .main-stage-container > .grid > .col-workspace {
+        margin-left: 0 !important;
+        width: 100%;
+    }
+}

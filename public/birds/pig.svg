@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Pig / Minion Pig -->
+  <!-- Ears -->
+  <circle cx="26" cy="28" r="14" fill="#27ae60"/>
+  <circle cx="74" cy="28" r="14" fill="#27ae60"/>
+  <circle cx="26" cy="28" r="8" fill="#2ecc71"/>
+  <circle cx="74" cy="28" r="8" fill="#2ecc71"/>
+  <!-- Body -->
+  <circle cx="50" cy="58" r="36" fill="#2ecc71"/>
+  <!-- Snout -->
+  <ellipse cx="50" cy="68" rx="16" ry="12" fill="#27ae60"/>
+  <circle cx="44" cy="69" r="5" fill="#1e8449" opacity="0.7"/>
+  <circle cx="56" cy="69" r="5" fill="#1e8449" opacity="0.7"/>
+  <!-- Eyes white -->
+  <ellipse cx="37" cy="50" rx="13" ry="12" fill="white"/>
+  <ellipse cx="63" cy="50" rx="13" ry="12" fill="white"/>
+  <!-- Pupils -->
+  <circle cx="37" cy="52" r="6" fill="#1a0505"/>
+  <circle cx="63" cy="52" r="6" fill="#1a0505"/>
+  <!-- Eye shine -->
+  <circle cx="39" cy="50" r="2.5" fill="white"/>
+  <circle cx="65" cy="50" r="2.5" fill="white"/>
+  <!-- Smile -->
+  <path d="M38 72 Q50 82 62 72" fill="none" stroke="#1e8449" stroke-width="3" stroke-linecap="round"/>
+  <!-- Helmet dent (optional classic look) -->
+  <path d="M24 36 Q50 18 76 36 Q68 26 50 22 Q32 26 24 36 Z" fill="#27ae60" opacity="0.5"/>
+</svg>

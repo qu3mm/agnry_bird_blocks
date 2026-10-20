@@ -1,0 +1,388 @@
+/* blocks.css - Blockly & Code.org Interlocking Puzzle-Block System */
+
+:root {
+    --block-teal: #00b0dc;
+    --block-teal-dark: #008eb2;
+    --block-orange: #ffa400;
+    --block-orange-dark: #d68700;
+    --block-loop: #e91e63;
+    --block-loop-dark: #c2185b;
+    --block-condition: #00838f;
+    --block-condition-dark: #006064;
+    --notch-left: 20px;
+    --notch-width: 24px;
+    --notch-height: 5px;
+}
+
+/* ==========================================================================
+   Toolbox Prototype Blocks
+   ========================================================================== */
+.block-prototype {
+    margin-bottom: 12px;
+    cursor: grab;
+    user-select: none;
+    transition: transform 0.15s ease, filter 0.15s ease;
+    display: inline-block;
+}
+
+.block-prototype:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.06);
+}
+
+.block-prototype:active {
+    cursor: grabbing;
+}
+
+/* ==========================================================================
+   Block Stacks (Connected Group Containers)
+   ========================================================================== */
+.block-stack {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    z-index: 10;
+    filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.25));
+}
+
+.block-stack.block-stack-dragging {
+    z-index: 10000 !important;
+    opacity: 0.96;
+    filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.42)) scale(1.02);
+    cursor: grabbing !important;
+    pointer-events: none;
+}
+
+/* ==========================================================================
+   Individual Block Nodes
+   ========================================================================== */
+.block-node {
+    user-select: none;
+    position: relative;
+    cursor: grab;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+}
+
+.block-node:active {
+    cursor: grabbing;
+}
+
+/* Interlocking Snug Fit: Blocks directly chained in a stack */
+.block-stack > .block-node + .block-node {
+    margin-top: -1px; /* Borders touch seamlessly without gap */
+}
+
+/* When a block is attached under another block, hide its top socket so the upper block's tab cleanly plugs into it */
+.block-stack > .block-node + .block-node .block-notch-top,
+.block-c-slot > .block-node .block-notch-top {
+    display: none !important;
+}
+
+/* Base Block Shape */
+.block-shape {
+    position: relative;
+    border-radius: 4px;
+    font-family: 'Nunito', 'Plus Jakarta Sans', "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    font-weight: 700;
+    font-size: 13.5px;
+    color: #ffffff;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.35), inset 0 -2px 2px rgba(0, 0, 0, 0.18);
+}
+
+/* Dropdown Selectors inside Blocks */
+.block-select {
+    background: #ffffff;
+    color: #1e293b;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 700;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    padding: 3px 8px;
+    margin: 0 4px;
+    cursor: pointer;
+    outline: none;
+    vertical-align: middle;
+}
+
+/* ==========================================================================
+   Block Shapes: When Run, Actions, Loops, Conditions
+   ========================================================================== */
+/* Orange Root Block (when run) */
+.block-when-run {
+    background-color: var(--block-orange);
+    border: 1px solid var(--block-orange-dark);
+    border-radius: 8px 8px 4px 4px;
+    min-width: 140px;
+    display: block;
+}
+
+.block-when-run .block-content {
+    padding: 9px 16px 13px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+}
+
+.block-when-run .block-icon {
+    font-size: 13px;
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Action Blocks (move forward, turn left, turn right) */
+.block-action {
+    background-color: var(--block-teal);
+    border: 1px solid var(--block-teal-dark);
+    min-width: 130px;
+    display: block;
+}
+
+.block-action .block-content {
+    padding: 7px 12px 9px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
+}
+
+.block-select-wrap {
+    display: inline-flex;
+    position: relative;
+    align-items: center;
+}
+
+.block-select.block-param-turn {
+    appearance: none;
+    background: #8de5e6;
+    color: #07585c;
+    border: 0;
+    border-radius: 3px;
+    padding: 2px 18px 2px 6px;
+    margin: 0;
+    font-size: 12px;
+}
+
+.block-select-wrap::after {
+    content: "▾";
+    position: absolute;
+    right: 5px;
+    color: #087d85;
+    font-size: 11px;
+    pointer-events: none;
+}
+
+.block-prototype:focus-within .block-shape {
+    outline: 3px solid #ffd52a;
+    outline-offset: 2px;
+}
+
+/* ==========================================================================
+   C-Blocks: Loops & Conditionals (Blockly Mouth Style)
+   ========================================================================== */
+.block-c-container {
+    display: flex;
+    flex-direction: column;
+    min-width: 175px;
+}
+
+.block-c-loop {
+    background-color: var(--block-loop);
+    border: 1px solid var(--block-loop-dark);
+}
+
+.block-c-condition {
+    background-color: var(--block-condition);
+    border: 1px solid var(--block-condition-dark);
+}
+
+.block-c-header {
+    position: relative;
+    padding: 8px 14px 11px 14px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    border-radius: 4px 4px 0 0;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+}
+
+.block-c-body-arm {
+    display: flex;
+    position: relative;
+    min-height: 34px;
+}
+
+.block-c-left-bar {
+    width: 18px;
+    background-color: inherit;
+    border-left: 1px solid inherit;
+    flex-shrink: 0;
+}
+
+.block-c-slot {
+    flex-grow: 1;
+    min-height: 34px;
+    background: rgba(0, 0, 0, 0.08);
+    border-radius: 0 0 0 4px;
+    padding: 2px 6px 4px 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    border-left: 2px dashed rgba(255, 255, 255, 0.35);
+}
+
+.block-c-slot:empty::before {
+    content: "drop block here";
+    font-size: 11px;
+    font-style: italic;
+    color: rgba(255, 255, 255, 0.6);
+    line-height: 28px;
+    padding-left: 6px;
+    pointer-events: none;
+}
+
+/* Blocks nested inside C-block slots */
+.block-c-slot > .block-node:first-child {
+    margin-top: 0;
+}
+
+.block-c-slot > .block-node + .block-node {
+    margin-top: -1px;
+}
+
+.block-c-footer {
+    position: relative;
+    height: 14px;
+    background-color: inherit;
+    border-radius: 0 0 4px 4px;
+    border-bottom: 1px solid inherit;
+}
+
+.block-c-else-header {
+    position: relative;
+    padding: 4px 14px 6px 14px;
+    background-color: inherit;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+/* ==========================================================================
+   Puzzle Notches (Tabs & Sockets - Exact Pixel Alignment)
+   ========================================================================== */
+/* Top socket (hole) */
+.block-notch-top {
+    position: absolute;
+    top: -1px;
+    left: var(--notch-left);
+    width: var(--notch-width);
+    height: var(--notch-height);
+    background: transparent;
+    overflow: hidden;
+    z-index: 2;
+}
+
+.block-notch-top::after {
+    content: "";
+    position: absolute;
+    top: -6px;
+    left: 0;
+    width: var(--notch-width);
+    height: 12px;
+    background: #fcf4e4;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.22);
+    border-radius: 0 0 5px 5px;
+}
+
+/* Bottom tab (connector plug) */
+.block-notch-bottom {
+    position: absolute;
+    bottom: -5px;
+    left: var(--notch-left);
+    width: var(--notch-width);
+    height: var(--notch-height);
+    background-color: inherit;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.22);
+    border-left: 1px solid rgba(0, 0, 0, 0.15);
+    border-right: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 0 0 5px 5px;
+    z-index: 5;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.block-when-run .block-notch-bottom {
+    background-color: var(--block-orange);
+}
+
+.block-action .block-notch-bottom {
+    background-color: var(--block-teal);
+}
+
+.block-c-loop .block-notch-bottom,
+.block-c-loop .block-c-footer {
+    background-color: var(--block-loop);
+}
+
+.block-c-condition .block-notch-bottom,
+.block-c-condition .block-c-footer {
+    background-color: var(--block-condition);
+}
+
+/* Inner tab inside C-block mouth (for nested block top notch to snap into) */
+.block-notch-inner-top {
+    position: absolute;
+    bottom: -5px;
+    left: calc(var(--notch-left) + 4px);
+    width: var(--notch-width);
+    height: var(--notch-height);
+    background-color: inherit;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.22);
+    border-radius: 0 0 5px 5px;
+    z-index: 5;
+}
+
+/* ==========================================================================
+   Execution Glow & Highlighting
+   ========================================================================== */
+.block-highlight > .block-shape,
+.block-shape.block-highlight {
+    outline: 4px solid #ffeb3b !important;
+    outline-offset: 2px;
+    filter: drop-shadow(0 0 14px rgba(255, 235, 59, 0.95)) !important;
+    animation: pulseBlock 0.35s alternate infinite;
+    z-index: 50 !important;
+}
+
+@keyframes pulseBlock {
+    0% { transform: scale(1); }
+    100% { transform: scale(1.02); }
+}
+
+/* Snap Target Highlight Indicator */
+.block-snap-indicator {
+    position: absolute;
+    height: 5px;
+    background: #ffeb3b;
+    border: 2px solid #f57f17;
+    border-radius: 4px;
+    z-index: 99999;
+    pointer-events: none;
+    box-shadow: 0 0 12px rgba(255, 235, 59, 0.95);
+    animation: glowIndicator 0.4s infinite alternate;
+}
+
+@keyframes glowIndicator {
+    from { opacity: 0.8; transform: scaleY(1); }
+    to { opacity: 1; transform: scaleY(1.4); }
+}
