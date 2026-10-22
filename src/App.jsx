@@ -9,20 +9,100 @@ import { TIERS, LEVELS, STUDY_LEVEL_COUNT } from './data/levels';
 import { MazeRenderer } from './utils/maze';
 import { BlockWorkspace } from './utils/blocks'; // interactive block workspace
 import { soundFX } from './utils/audio';
-import { dbInsert } from './utils/supabase';
+import { dbInsert, supabase } from './utils/supabase';
+import confetti from 'canvas-confetti';
+
+// Helper to determine if a participant's 30-minute gameplay or study has ended
+function isGameEnded(pid) {
+  if (!pid) return false;
+  try {
+    if (localStorage.getItem(`hoc_posttest_${pid}`)) return true;
+    if (localStorage.getItem(`hoc_session_finished_${pid}`)) return true;
+    const start = localStorage.getItem(`hoc_session_start_${pid}`);
+    if (start && Date.now() - parseInt(start, 10) >= 1800 * 1000) {
+      localStorage.setItem(`hoc_session_finished_${pid}`, 'true');
+      return true;
+    }
+    const win = localStorage.getItem(`hoc_checkin_win_${pid}`);
+    if (win && parseInt(win, 10) > 6) {
+      localStorage.setItem(`hoc_session_finished_${pid}`, 'true');
+      return true;
+    }
+    const min = localStorage.getItem(`hoc_minute_num_${pid}`);
+    if (min && parseInt(min, 10) > 30) {
+      localStorage.setItem(`hoc_session_finished_${pid}`, 'true');
+      return true;
+    }
+  } catch {}
+  return false;
+}
 
 export default function App() {
   const [currentLevelIndex, setCurrentLevelIndex] = useState(0);
   const [currentTierFilter, setCurrentTierFilter] = useState('all');
-  const [studyComplete, setStudyComplete] = useState(false);
+  const [studyComplete, setStudyComplete] = useState(() => {
+    try {
+      const pid = localStorage.getItem('hoc_participant_id');
+      if (!pid) return false;
+      return !!localStorage.getItem(`hoc_posttest_${pid}`);
+    } catch {
+      return false;
+    }
+  });
+
+  // Confetti celebration when study is complete (including on refresh)
+  useEffect(() => {
+    if (studyComplete) {
+      try {
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+      } catch {}
+    }
+  }, [studyComplete]);
   const [isRunning, setIsRunning] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
 
-  // Timer State
+  // 30-Minute Overall Experiment Timer Persistence
+  const [sessionStartTime, setSessionStartTime] = useState(() => {
+    try {
+      const pid = localStorage.getItem('hoc_participant_id');
+      const saved = localStorage.getItem(`hoc_session_start_${pid || 'default'}`);
+      return saved ? parseInt(saved, 10) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  // Timer State (5-minute interval timer)
   const [timerMode, setTimerMode] = useState('normal'); // 'normal' (300s) or 'demo' (15s)
   const [timerTotal, setTimerTotal] = useState(300);
-  const [timerSeconds, setTimerSeconds] = useState(300);
-  const [isTimerRunning, setIsTimerRunning] = useState(true);
+  const [timerSeconds, setTimerSeconds] = useState(() => {
+    try {
+      const pid = localStorage.getItem('hoc_participant_id');
+      const isFinished = !!localStorage.getItem(`hoc_session_finished_${pid || 'default'}`);
+      if (isFinished) return 0;
+      const saved = localStorage.getItem(`hoc_timer_secs_${pid || 'default'}`);
+      const val = saved ? parseInt(saved, 10) : 300;
+      return val <= 0 ? 300 : val;
+    } catch {
+      return 300;
+    }
+  });
+  const [isTimerRunning, setIsTimerRunning] = useState(() => {
+    try {
+      const pid = localStorage.getItem('hoc_participant_id');
+      if (!pid) return false;
+      if (localStorage.getItem(`hoc_posttest_${pid}`)) return false;
+      if (localStorage.getItem(`hoc_session_finished_${pid}`)) return false;
+      if (isGameEnded(pid)) return false;
+      return true;
+    } catch {
+      return false;
+    }
+  });
 
   // Participant ID State
   const [participantId, setParticipantId] = useState(() => {
@@ -36,16 +116,23 @@ export default function App() {
   // Login Modal State (opens if no participantId is set)
   const [loginOpen, setLoginOpen] = useState(!participantId);
 
-  // Welcome Banner State
-  const [welcomeOpen, setWelcomeOpen] = useState(true);
+  // Welcome Banner State (only shown after participant is logged in)
+  const [welcomeOpen, setWelcomeOpen] = useState(false);
 
   // Pre-test Survey State (opens after welcome or when explicitly requested)
   const [pretestOpen, setPretestOpen] = useState(false);
+  const [pretestCompleted, setPretestCompleted] = useState(() => {
+    try {
+      const pid = localStorage.getItem('hoc_participant_id');
+      return !!localStorage.getItem(`hoc_pretest_${pid || 'default'}`) || !!localStorage.getItem('hoc_pretest_survey');
+    } catch {
+      return false;
+    }
+  });
 
   const handleStartFromWelcome = () => {
     setWelcomeOpen(false);
-    const pretestDone = localStorage.getItem('hoc_pretest_survey');
-    if (!pretestDone) {
+    if (!pretestCompleted) {
       setPretestOpen(true);
     }
   };
@@ -55,19 +142,90 @@ export default function App() {
     setPretestOpen(true);
   };
 
-  const handleLogin = (id) => {
+  const handleLogin = async (id) => {
     setParticipantId(id);
     try {
       localStorage.setItem('hoc_participant_id', id);
     } catch {}
     setLoginOpen(false);
     showToast(`👋 Logged in as ${id}!`);
+
+    // Check localStorage first
+    let isDone = !!localStorage.getItem(`hoc_pretest_${id}`);
+
+    // Check Supabase for pre-test if not found locally
+    if (!isDone) {
+      try {
+        const { data } = await supabase
+          .from('pre_test')
+          .select('id')
+          .eq('participant_id', id)
+          .limit(1);
+        if (data && data.length > 0) {
+          isDone = true;
+          localStorage.setItem(`hoc_pretest_${id}`, 'true');
+        }
+      } catch (e) {
+        console.warn('[pretest check error]', e);
+      }
+    }
+
+    setPretestCompleted(isDone);
+
+    // Check if post-test was already completed
+    let isPostDone = !!localStorage.getItem(`hoc_posttest_${id}`);
+    if (!isPostDone) {
+      try {
+        const { data: postData } = await supabase
+          .from('post_test')
+          .select('id')
+          .eq('participant_id', id)
+          .limit(1);
+        if (postData && postData.length > 0) {
+          isPostDone = true;
+          localStorage.setItem(`hoc_posttest_${id}`, 'true');
+        }
+      } catch (e) {
+        console.warn('[posttest check error]', e);
+      }
+    }
+    setStudyComplete(isPostDone);
+    if (isPostDone) {
+      setSessionEndOpen(false);
+      setIsTimerRunning(false);
+    } else if (isGameEnded(id)) {
+      setSessionEndOpen(true);
+      setIsTimerRunning(false);
+    }
+
+    if (!isDone) {
+      setWelcomeOpen(true);
+    }
   };
 
   // Check-in window tracking (Window 1 through 6 per 30-min session)
-  const [checkinWindow, setCheckinWindow] = useState(1);
+  const [checkinWindow, setCheckinWindow] = useState(() => {
+    try {
+      const pid = localStorage.getItem('hoc_participant_id');
+      const saved = localStorage.getItem(`hoc_checkin_win_${pid || 'default'}`);
+      return saved ? parseInt(saved, 10) : 1;
+    } catch {
+      return 1;
+    }
+  });
 
   // Modals State
+  const [sessionEndOpen, setSessionEndOpen] = useState(() => {
+    try {
+      const pid = localStorage.getItem('hoc_participant_id');
+      const isPostDone = !!localStorage.getItem(`hoc_posttest_${pid || 'default'}`);
+      // If post-test is already completed, do NOT show the 30-min prompt again
+      if (isPostDone) return false;
+      return !!localStorage.getItem(`hoc_session_finished_${pid || 'default'}`);
+    } catch {
+      return false;
+    }
+  });
   const [checkinOpen, setCheckinOpen] = useState(false);
   const [posttestOpen, setPosttestOpen] = useState(false);
   const [certOpen, setCertOpen] = useState(false);
@@ -80,7 +238,34 @@ export default function App() {
   const [hintModalOpen, setHintModalOpen] = useState(false);
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [historyData, setHistoryData] = useState([]);
+  const [minuteLogsData, setMinuteLogsData] = useState(() => {
+    try {
+      const pid = localStorage.getItem('hoc_participant_id');
+      if (!pid) return [];
+      return JSON.parse(localStorage.getItem(`hoc_minute_logs_${pid}`) || '[]');
+    } catch {
+      return [];
+    }
+  });
   const [toast, setToast] = useState(null);
+
+  // Keep track of current level without triggering timer re-runs
+  const currentLevelIndexRef = useRef(currentLevelIndex);
+  useEffect(() => {
+    currentLevelIndexRef.current = currentLevelIndex;
+  }, [currentLevelIndex]);
+
+  // Set of already logged minute numbers (prevents duplicates)
+  const loggedMinutesRef = useRef(new Set());
+  useEffect(() => {
+    if (participantId) {
+      try {
+        const stored = JSON.parse(localStorage.getItem(`hoc_minute_logs_${participantId}`) || '[]');
+        stored.forEach((r) => loggedMinutesRef.current.add(r.minute_number));
+        setMinuteLogsData(stored);
+      } catch {}
+    }
+  }, [participantId]);
 
   // DOM Refs
   const mazeContainerRef = useRef(null);
@@ -98,6 +283,41 @@ export default function App() {
     setToast(message);
     setTimeout(() => setToast(null), 3500);
   };
+
+  // ── Minute-by-Minute Telemetry Tracker ─────────────────────────────────────
+  const minuteStatsRef = useRef({
+    puzzles: new Set(),
+    attempts: 0,
+    resets: 0,
+    solved: 0,
+    idleSeconds: 0
+  });
+  const lastActivityTimeRef = useRef(Date.now());
+
+  // ── Per-Puzzle Telemetry Tracker ──────────────────────────────────────────
+  const puzzleStartTimeRef = useRef(Date.now());
+  const puzzleStatsRef = useRef({
+    attempts: 0,
+    resets: 0,
+    crashes: 0
+  });
+
+  // Track user activity to measure idle time
+  useEffect(() => {
+    const markActive = () => {
+      lastActivityTimeRef.current = Date.now();
+    };
+    window.addEventListener('mousemove', markActive);
+    window.addEventListener('keydown', markActive);
+    window.addEventListener('click', markActive);
+    window.addEventListener('touchstart', markActive);
+    return () => {
+      window.removeEventListener('mousemove', markActive);
+      window.removeEventListener('keydown', markActive);
+      window.removeEventListener('click', markActive);
+      window.removeEventListener('touchstart', markActive);
+    };
+  }, []);
 
   // Initialize Engines & Load Level 0
   useEffect(() => {
@@ -137,11 +357,20 @@ export default function App() {
   const loadLevel = useCallback(
     (index) => {
       if (index < 0 || index >= LEVELS.length) return;
+      const pid = localStorage.getItem('hoc_participant_id');
+      if (isGameEnded(pid)) return;
       runCanceledRef.current = true;
       setIsRunning(false);
       setCurrentLevelIndex(index);
 
       const level = LEVELS[index];
+      // Reset per-puzzle timer and telemetry counters
+      puzzleStartTimeRef.current = Date.now();
+      puzzleStatsRef.current = {
+        attempts: 0,
+        resets: 0,
+        crashes: 0
+      };
       if (mazeRendererRef.current) {
         mazeRendererRef.current.init(level);
       }
@@ -154,6 +383,8 @@ export default function App() {
 
   // Handle Tier Selection
   const handleSelectTier = (tierId) => {
+    const pid = localStorage.getItem('hoc_participant_id');
+    if (isGameEnded(pid)) return;
     setCurrentTierFilter(tierId);
     if (tierId !== 'all') {
       const firstOfTier = LEVELS.findIndex((l) => l.tier === tierId);
@@ -163,30 +394,158 @@ export default function App() {
     }
   };
 
-  // Timer Tick Interval
+  // Timer Tick Interval & Minute Telemetry (Unified 1-Second Master Clock)
   useEffect(() => {
-    if (!isTimerRunning || checkinOpen || pretestOpen) return;
+    if (
+      !participantId ||
+      !isTimerRunning ||
+      checkinOpen ||
+      pretestOpen ||
+      loginOpen ||
+      !pretestCompleted ||
+      sessionEndOpen ||
+      studyComplete ||
+      isGameEnded(participantId)
+    ) {
+      return;
+    }
+
+    // Initialize session start time if not yet started
+    if (!sessionStartTime) {
+      const now = Date.now();
+      setSessionStartTime(now);
+      try {
+        localStorage.setItem(`hoc_session_start_${participantId}`, String(now));
+      } catch {}
+    }
 
     const interval = setInterval(() => {
+      // 1. Check if session has ended
+      if (isGameEnded(participantId)) {
+        clearInterval(interval);
+        setIsTimerRunning(false);
+        if (!studyComplete) {
+          setSessionEndOpen(true);
+        }
+        return;
+      }
+
+      // Track idle seconds (>3s of inactivity)
+      if (Date.now() - lastActivityTimeRef.current > 3000) {
+        minuteStatsRef.current.idleSeconds += 1;
+      }
+
+      // Track active puzzle level
+      const curLvl = LEVELS[currentLevelIndexRef.current];
+      if (curLvl) {
+        minuteStatsRef.current.puzzles.add(curLvl.id);
+      }
+
+      // 2. Decrement countdown and trigger minute telemetry & check-ins
       setTimerSeconds((prev) => {
-        if (prev <= 1) {
-          // Timer expired -> Pause and prompt check-in
+        const next = prev <= 1 ? 0 : prev - 1;
+        try {
+          localStorage.setItem(`hoc_timer_secs_${participantId}`, String(next));
+        } catch {}
+
+        // Each 5-minute window consists of 5 minutes:
+        // Normal mode: timerTotal = 300, secsPerMin = 60
+        // Demo mode: timerTotal = 15, secsPerMin = 3
+        const secsPerMin = timerMode === 'demo' ? 3 : 60;
+        const elapsedInWindow = timerTotal - next;
+
+        // When a full minute has elapsed in this window:
+        if (elapsedInWindow > 0 && elapsedInWindow % secsPerMin === 0) {
+          const minInWin = Math.round(elapsedInWindow / secsPerMin);
+          const currentMin = (checkinWindow - 1) * 5 + minInWin;
+
+          if (currentMin <= 30 && !loggedMinutesRef.current.has(currentMin) && !isGameEnded(participantId)) {
+            loggedMinutesRef.current.add(currentMin);
+            try {
+              localStorage.setItem(`hoc_minute_num_${participantId}`, String(currentMin + 1));
+            } catch {}
+
+            const stats = minuteStatsRef.current;
+            const puzzleList = Array.from(stats.puzzles).sort((a, b) => a - b).join(', ') || String(curLvl?.id || 1);
+            const tierName = curLvl?.tier ? (TIERS[curLvl.tier]?.name || curLvl.tier) : 'Easy';
+
+            const logRecord = {
+              participant_id: participantId,
+              minute_number: currentMin,
+              puzzle_no: puzzleList,
+              tier: tierName,
+              attempts: stats.attempts,
+              resets: stats.resets,
+              idle_seconds: Math.min(secsPerMin, stats.idleSeconds),
+              solved: stats.solved > 0 ? 1 : 0
+            };
+
+            dbInsert('minute_logs', logRecord);
+
+            try {
+              const existing = JSON.parse(localStorage.getItem(`hoc_minute_logs_${participantId}`) || '[]');
+              const updated = [...existing.filter((r) => r.minute_number !== currentMin), logRecord].sort((a, b) => a.minute_number - b.minute_number);
+              localStorage.setItem(`hoc_minute_logs_${participantId}`, JSON.stringify(updated));
+              setMinuteLogsData(updated);
+            } catch {}
+
+            // Reset stats for the upcoming minute
+            minuteStatsRef.current = {
+              puzzles: new Set([curLvl?.id || 1]),
+              attempts: 0,
+              resets: 0,
+              solved: 0,
+              idleSeconds: 0
+            };
+          }
+        }
+
+        // 3. Check window completion
+        if (next <= 0) {
+          // If all 6 check-in windows (30 minutes) are complete:
+          if (checkinWindow >= 6) {
+            setIsTimerRunning(false);
+            try {
+              localStorage.setItem(`hoc_session_finished_${participantId}`, 'true');
+            } catch {}
+            if (!studyComplete) {
+              setSessionEndOpen(true);
+            }
+            return 0;
+          }
+
+          // Otherwise, 5-minute interval reached -> trigger check-in
           soundFX.playTimerChime();
           setCheckinOpen(true);
           return 0;
         }
-        return prev - 1;
+
+        return next;
       });
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isTimerRunning, checkinOpen, pretestOpen]);
+  }, [
+    isTimerRunning,
+    checkinOpen,
+    pretestOpen,
+    loginOpen,
+    pretestCompleted,
+    participantId,
+    sessionStartTime,
+    sessionEndOpen,
+    studyComplete,
+    checkinWindow,
+    timerTotal,
+    timerMode
+  ]);
 
   // Pre-test Submission
   const handlePretestSubmit = (data) => {
     try {
       localStorage.setItem('hoc_pretest_survey', JSON.stringify(data));
       if (data.participantId) {
+        localStorage.setItem(`hoc_pretest_${data.participantId}`, JSON.stringify(data));
         localStorage.setItem('hoc_participant_id', data.participantId);
         setParticipantId(data.participantId);
       }
@@ -206,6 +565,7 @@ export default function App() {
       submitted_at:       data.submittedAt,
     });
     setPretestOpen(false);
+    setPretestCompleted(true);
     showToast(`✨ Pre-test submitted! Participant: ${data.participantId || 'P01'}`);
     soundFX.playWin();
   };
@@ -220,6 +580,10 @@ export default function App() {
 
   // Manual Trigger Check-in
   const handleTestCheckin = () => {
+    if (sessionEndOpen || checkinWindow > 6 || isGameEnded(participantId) || studyComplete) {
+      showToast('⚠️ 30-Minute session is completed.');
+      return;
+    }
     soundFX.playTimerChime();
     setCheckinOpen(true);
   };
@@ -252,30 +616,54 @@ export default function App() {
     soundFX.playWin();
 
     // Advance window counter (up to 6)
-    setCheckinWindow((prev) => prev + 1);
+    setCheckinWindow((prev) => {
+      const next = prev + 1;
+      try {
+        localStorage.setItem(`hoc_checkin_win_${data.participantId}`, String(next));
+      } catch {}
+      return next;
+    });
 
-    // If 6 check-ins completed (30-min gameplay session complete per Section 2.2 Phase 4), open Post-test!
+    // If 6 check-ins completed (30-min gameplay session complete), show Session Over modal!
     if (data.window >= 6) {
+      try {
+        localStorage.setItem(`hoc_session_finished_${data.participantId}`, 'true');
+      } catch {}
       setTimeout(() => {
-        setPosttestOpen(true);
-      }, 1000);
+        setIsTimerRunning(false);
+        setSessionEndOpen(true);
+      }, 800);
+      return;
     }
 
     // Reset and resume timer
     const resetSecs = timerMode === 'demo' ? 15 : 300;
     setTimerSeconds(resetSecs);
+    try {
+      localStorage.setItem(`hoc_timer_secs_${data.participantId}`, String(resetSecs));
+    } catch {}
     setIsTimerRunning(true);
   };
 
   // Post-Test Submission (Appendix B3)
   const handlePosttestSubmit = (data) => {
+    const pid = data.participantId || participantId;
+    if (!pid || localStorage.getItem(`hoc_posttest_${pid}`)) {
+      showToast('✓ You have already submitted the Post-test survey.');
+      setPosttestOpen(false);
+      setStudyComplete(true);
+      return;
+    }
+
     try {
       localStorage.setItem('hoc_posttest_survey', JSON.stringify(data));
+      localStorage.setItem(`hoc_posttest_${pid}`, 'true');
+      localStorage.setItem(`hoc_session_finished_${pid}`, 'true');
     } catch (e) {
       console.error(e);
     }
     dbInsert('post_test', {
-      participant_id:        data.participantId,
+      participant_id:        pid,
       dominant_emotion:      data.dominantEmotion,
       overall_difficulty:    data.overallDifficulty,
       future_confidence:     data.futureConfidence,
@@ -287,8 +675,32 @@ export default function App() {
     });
     setStudyComplete(true);
     setPosttestOpen(false);
-    setCertOpen(true);
-    showToast('🎓 Post-test complete! Viewing Certificate of Participation.');
+    setIsTimerRunning(false);
+
+    // Fire celebratory confetti for completing the research study!
+    try {
+      confetti({
+        particleCount: 120,
+        spread: 80,
+        origin: { y: 0.6 }
+      });
+      setTimeout(() => {
+        confetti({
+          particleCount: 80,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0 }
+        });
+        confetti({
+          particleCount: 80,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1 }
+        });
+      }, 300);
+    } catch {}
+
+    showToast('🎉 Thank you! Your participation in the study is complete.');
     soundFX.playWin();
   };
 
@@ -304,6 +716,23 @@ export default function App() {
 
   // Single Step Execution
   const handleStep = async () => {
+    if (!participantId) {
+      setLoginOpen(true);
+      return;
+    }
+    if (studyComplete) {
+      showToast('🏆 Study completed! Gameplay is closed.');
+      return;
+    }
+    if (!pretestCompleted) {
+      setPretestOpen(true);
+      return;
+    }
+    if (sessionEndOpen || isGameEnded(participantId)) {
+      setSessionEndOpen(true);
+      showToast('⚠️ 30-Minute gameplay has ended.');
+      return;
+    }
     if (isRunning || !workspaceInstanceRef.current || !mazeRendererRef.current) return;
     const ws = workspaceInstanceRef.current;
     const renderer = mazeRendererRef.current;
@@ -333,6 +762,8 @@ export default function App() {
 
   // Reset Run
   const resetRun = () => {
+    minuteStatsRef.current.resets += 1;
+    puzzleStatsRef.current.resets += 1;
     runCanceledRef.current = true;
     setIsRunning(false);
     const level = LEVELS[currentLevelIndex];
@@ -355,7 +786,9 @@ export default function App() {
 
   // Start Over Workspace Blocks
   const handleStartOver = () => {
+    if (studyComplete || sessionEndOpen || isGameEnded(participantId)) return;
     if (window.confirm('Reset blocks back to the start of this puzzle?')) {
+      minuteStatsRef.current.resets += 1;
       loadLevel(currentLevelIndex);
       soundFX.playTrash();
     }
@@ -387,9 +820,28 @@ export default function App() {
   // Program Execution Engine (Supports Loops, Nested Loops & Conditionals)
   // =========================================================================
   const runProgram = async () => {
+    if (!participantId) {
+      setLoginOpen(true);
+      return;
+    }
+    if (studyComplete) {
+      showToast('🏆 Study completed! Gameplay is closed.');
+      return;
+    }
+    if (!pretestCompleted) {
+      setPretestOpen(true);
+      return;
+    }
+    if (sessionEndOpen || isGameEnded(participantId)) {
+      setSessionEndOpen(true);
+      showToast('⚠️ 30-Minute gameplay has ended.');
+      return;
+    }
     if (isRunning || !workspaceInstanceRef.current || !mazeRendererRef.current) return;
 
     setIsRunning(true);
+    minuteStatsRef.current.attempts += 1;
+    puzzleStatsRef.current.attempts += 1;
     runCanceledRef.current = false;
 
     const ws = workspaceInstanceRef.current;
@@ -559,10 +1011,28 @@ export default function App() {
     ws.highlightBlock(null);
 
     if (outcome.reachedPig || renderer.hasReachedPig()) {
+      minuteStatsRef.current.solved += 1;
+
+      // ── Record Puzzle Completion Log ──
+      const solvedLevel = LEVELS[currentLevelIndex];
+      const timeSpentSec = Math.max(1, Math.round((Date.now() - puzzleStartTimeRef.current) / 1000));
+      const treeBlocks = tree.length;
+      const maxAllowed = solvedLevel?.maxBlocks || 0;
+      dbInsert('puzzle_logs', {
+        participant_id: participantId,
+        level_id: solvedLevel.id,
+        tier: solvedLevel.tier ? (TIERS[solvedLevel.tier]?.name || solvedLevel.tier) : 'Easy',
+        time_seconds: timeSpentSec,
+        attempts: puzzleStatsRef.current.attempts,
+        resets: puzzleStatsRef.current.resets,
+        crashes: puzzleStatsRef.current.crashes,
+        blocks_used: treeBlocks,
+        optimal_blocks: maxAllowed
+      });
+
       soundFX.playWin();
       setIsRunning(false);
       const nextIndex = currentLevelIndex + 1;
-      const solvedLevel = LEVELS[currentLevelIndex];
 
       if (nextIndex < STUDY_LEVEL_COUNT) {
         showToast(`🎉 Puzzle #${solvedLevel.id} Solved! Jumping to Puzzle #${LEVELS[nextIndex].id}...`);
@@ -579,6 +1049,7 @@ export default function App() {
         showToast('🏆 Bonus puzzle complete! You finished all 21 puzzles.');
       }
     } else if (outcome.crashed) {
+      puzzleStatsRef.current.crashes += 1;
       if (outcome.reason === 'tnt') {
         setFeedback({
           open: true,
@@ -618,8 +1089,20 @@ export default function App() {
         timerTotal={timerTotal}
         onOpenWelcome={() => setWelcomeOpen(true)}
         onOpenLogin={() => setLoginOpen(true)}
-        onOpenPretest={() => setPretestOpen(true)}
-        onOpenPosttest={() => setPosttestOpen(true)}
+        onOpenPretest={() => {
+          if (pretestCompleted) {
+            showToast('✓ You have already completed the Pre-test survey.');
+          } else {
+            setPretestOpen(true);
+          }
+        }}
+        onOpenPosttest={() => {
+          if (studyComplete) {
+            showToast('✓ You have already submitted the Post-test survey.');
+          } else {
+            setPosttestOpen(true);
+          }
+        }}
         onTestCheckin={handleTestCheckin}
         onViewHistory={() => setHistoryModalOpen(true)}
         isMuted={isMuted}
@@ -652,29 +1135,170 @@ export default function App() {
         onToggleSpeed={(s) => setSpeed(s)}
       />
 
+      {/* Study Completed Screen if Post-Test is already submitted */}
+      {participantId && studyComplete && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(15, 23, 42, 0.95)',
+          backdropFilter: 'blur(10px)',
+          zIndex: 99999,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: '#fff',
+          textAlign: 'center',
+          padding: '24px'
+        }}>
+          <div style={{ fontSize: '64px', marginBottom: '14px', animation: 'birdBob 1.2s ease-in-out infinite alternate' }}>🏆</div>
+          <h2 style={{ fontSize: '28px', fontWeight: 900, margin: '0 0 10px 0', textShadow: '0 2px 6px rgba(0,0,0,0.6)', textTransform: 'uppercase', letterSpacing: '1px' }}>
+            Study Participation Complete!
+          </h2>
+          <p style={{ fontSize: '15.5px', color: '#cbd5e1', maxWidth: '460px', margin: '0 0 20px 0', lineHeight: '1.6' }}>
+            Thank you, <strong>{participantId}</strong>! You have successfully completed the 30-minute gameplay session and submitted all required surveys (Pre-Test and Post-Test). Your data is safely stored.
+          </p>
+          <div style={{
+            background: '#1e293b',
+            border: '1.5px solid #334155',
+            borderRadius: '12px',
+            padding: '12px 24px',
+            fontSize: '13.5px',
+            color: '#94a3b8',
+            marginBottom: '16px'
+          }}>
+            Please notify the research proctor that you are done.
+          </div>
+          <div style={{
+            fontSize: '13px',
+            fontWeight: 800,
+            color: '#fbbf24',
+            background: 'rgba(251, 191, 36, 0.1)',
+            border: '1px solid #d97706',
+            padding: '8px 20px',
+            borderRadius: '9999px',
+            letterSpacing: '0.3px',
+            boxShadow: '0 2px 8px rgba(217, 119, 6, 0.2)'
+          }}>
+            🎮 Developed by Quem Krister
+          </div>
+        </div>
+      )}
+      {!participantId && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(15, 23, 42, 0.75)',
+          backdropFilter: 'blur(8px)',
+          zIndex: 8000,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: '#fff',
+          textAlign: 'center',
+          padding: '20px'
+        }}>
+          <div style={{ fontSize: '48px', marginBottom: '12px' }}>🔒</div>
+          <h2 style={{ fontSize: '24px', fontWeight: 900, margin: '0 0 8px 0', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
+            Session Locked
+          </h2>
+          <p style={{ fontSize: '14px', color: '#cbd5e1', maxWidth: '380px', margin: '0 0 18px 0' }}>
+            Please authenticate with your assigned Participant ID and passcode to access the study and play.
+          </p>
+          <button
+            onClick={() => setLoginOpen(true)}
+            className="btn-primary"
+            style={{
+              padding: '10px 24px',
+              fontSize: '14px',
+              fontWeight: 800,
+              background: '#f59e0b',
+              border: '2px solid #b45309',
+              borderRadius: '8px',
+              cursor: 'pointer'
+            }}
+          >
+            Open Login Form 🔑
+          </button>
+        </div>
+      )}
+
+      {/* Lock Overlay if Pre-Test is not completed yet */}
+      {participantId && !pretestCompleted && !welcomeOpen && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(15, 23, 42, 0.75)',
+          backdropFilter: 'blur(6px)',
+          zIndex: 7999,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: '#fff',
+          textAlign: 'center',
+          padding: '20px'
+        }}>
+          <div style={{ fontSize: '48px', marginBottom: '12px' }}>📝</div>
+          <h2 style={{ fontSize: '24px', fontWeight: 900, margin: '0 0 8px 0', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
+            Pre-Test Survey Required
+          </h2>
+          <p style={{ fontSize: '14px', color: '#cbd5e1', maxWidth: '420px', margin: '0 0 18px 0', lineHeight: '1.5' }}>
+            Before launching into the puzzles, you must complete the short Pre-Test Survey so we can record your background.
+          </p>
+          <button
+            onClick={() => setPretestOpen(true)}
+            className="btn-primary"
+            style={{
+              padding: '12px 28px',
+              fontSize: '15px',
+              fontWeight: 900,
+              background: '#dc2626',
+              border: '2px solid #991b1b',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(220, 38, 38, 0.4)'
+            }}
+          >
+            Complete Pre-Test Survey Now 🚀
+          </button>
+        </div>
+      )}
+
       {/* All Dialogs & Modals */}
       <Modals
         currentLevelIndex={currentLevelIndex}
         participantId={participantId}
+        pretestCompleted={pretestCompleted}
+        sessionEndOpen={sessionEndOpen && !studyComplete}
+        onProceedToPosttest={() => {
+          setSessionEndOpen(false);
+          if (studyComplete || (participantId && localStorage.getItem(`hoc_posttest_${participantId}`))) {
+            showToast('✓ You have already submitted the Post-test survey.');
+          } else {
+            setPosttestOpen(true);
+          }
+        }}
         // Welcome banner modal
-        welcomeOpen={welcomeOpen}
+        welcomeOpen={welcomeOpen && !studyComplete}
         onCloseWelcome={() => setWelcomeOpen(false)}
         onStartFromWelcome={handleStartFromWelcome}
         onOpenPretestFromWelcome={handleOpenPretestFromWelcome}
         onSetParticipantId={setParticipantId}
         // Pre-test survey modal
-        pretestOpen={pretestOpen}
-        onClosePretest={() => setPretestOpen(false)}
+        pretestOpen={pretestOpen && !studyComplete}
+        onClosePretest={null}
         onSubmitPretest={handlePretestSubmit}
         // Check-in modal (Appendix B2)
-        checkinOpen={checkinOpen}
+        checkinOpen={checkinOpen && !studyComplete && !isGameEnded(participantId)}
         checkinWindow={checkinWindow}
         onCloseCheckin={() => setCheckinOpen(false)}
         onSubmitCheckin={handleSubmitCheckin}
         timerMode={timerMode}
         onChangeTimerMode={handleChangeTimerMode}
         // Post-test modal (Appendix B3)
-        posttestOpen={posttestOpen}
+        posttestOpen={posttestOpen && !studyComplete && !(participantId && localStorage.getItem(`hoc_posttest_${participantId}`))}
         onClosePosttest={() => setPosttestOpen(false)}
         onSubmitPosttest={handlePosttestSubmit}
         // Certificate modal (Appendix D)
@@ -715,6 +1339,7 @@ export default function App() {
         historyModalOpen={historyModalOpen}
         onCloseHistoryModal={() => setHistoryModalOpen(false)}
         historyData={historyData}
+        minuteLogsData={minuteLogsData}
       />
 
       {/* Participant Login Modal */}

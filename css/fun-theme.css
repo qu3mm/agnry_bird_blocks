@@ -502,19 +502,21 @@ button, input, select, textarea {
     font-weight: 800 !important;
 }
 
-.form-section-title span {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 24px;
-    background: linear-gradient(135deg, #e63232, #b91c1c);
-    color: #fff;
-    border-radius: 50%;
-    font-size: 12px;
-    font-weight: 900;
-    margin-right: 4px;
-    box-shadow: 0 2px 0 #7f1d1d;
+.form-section-title > span:first-child {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 24px !important;
+    height: 24px !important;
+    min-width: 24px !important;
+    background: linear-gradient(135deg, #e63232, #b91c1c) !important;
+    color: #fff !important;
+    border-radius: 50% !important;
+    font-size: 12px !important;
+    font-weight: 900 !important;
+    margin-right: 6px !important;
+    box-shadow: 0 2px 0 #7f1d1d !important;
+    flex-shrink: 0 !important;
 }
 
 /* ── Textarea & Input ── */

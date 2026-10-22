@@ -172,29 +172,29 @@ export default function GameArea({
 
             <div className="flex items-center gap-2">
               <button
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#5a2805] hover:bg-[#6e3207] text-[#ffd13b] border border-[#804212] rounded-full font-black text-[10.5px] uppercase tracking-wider leading-none shadow-[0_2px_0_#3d1b03] active:translate-y-0.5 transition cursor-pointer"
+                className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap px-3.5 py-1.5 bg-gradient-to-b from-[#f59e0b] to-[#d97706] hover:from-[#fbbf24] hover:to-[#f59e0b] text-[#3e1b04] border-2 border-[#b45309] rounded-full font-black text-[11px] uppercase tracking-wide leading-none shadow-[0_2.5px_0_#78350f] active:translate-y-0.5 transition cursor-pointer"
                 onClick={onClean}
                 title="Tidy workspace"
               >
-                <Sparkles className="w-3.5 h-3.5 text-[#fbbf24] flex-shrink-0" />
+                <Sparkles className="w-3.5 h-3.5 text-[#78350f] flex-shrink-0" />
                 <span>Clean</span>
               </button>
               <button
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#5a2805] hover:bg-[#6e3207] text-[#ffd13b] border border-[#804212] rounded-full font-black text-[10.5px] uppercase tracking-wider leading-none shadow-[0_2px_0_#3d1b03] active:translate-y-0.5 transition cursor-pointer"
+                className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap px-3.5 py-1.5 bg-gradient-to-b from-[#f59e0b] to-[#d97706] hover:from-[#fbbf24] hover:to-[#f59e0b] text-[#3e1b04] border-2 border-[#b45309] rounded-full font-black text-[11px] uppercase tracking-wide leading-none shadow-[0_2.5px_0_#78350f] active:translate-y-0.5 transition cursor-pointer"
                 id="btn-start-over"
                 onClick={onStartOver}
                 title="Reset workspace"
               >
-                <RotateCcw className="w-3.5 h-3.5 text-[#f87171] flex-shrink-0" />
+                <RotateCcw className="w-3.5 h-3.5 text-[#991b1b] shrink-0" />
                 <span>Start Over</span>
               </button>
               <button
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#5a2805] hover:bg-[#6e3207] text-[#ffd13b] border border-[#804212] rounded-full font-black text-[10.5px] uppercase tracking-wider leading-none shadow-[0_2px_0_#3d1b03] active:translate-y-0.5 transition cursor-pointer"
+                className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap px-3.5 py-1.5 bg-gradient-to-b from-[#f59e0b] to-[#d97706] hover:from-[#fbbf24] hover:to-[#f59e0b] text-[#3e1b04] border-2 border-[#b45309] rounded-full font-black text-[11px] uppercase tracking-wide leading-none shadow-[0_2.5px_0_#78350f] active:translate-y-0.5 transition cursor-pointer"
                 id="btn-show-code"
                 onClick={onShowCode}
                 title="View code"
               >
-                <Code2 className="w-3.5 h-3.5 text-[#60a5fa] flex-shrink-0" />
+                <Code2 className="w-3.5 h-3.5 text-[#1e3a8a] flex-shrink-0" />
                 <span>Code</span>
               </button>
             </div>
