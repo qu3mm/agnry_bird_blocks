@@ -18,18 +18,8 @@ function isGameEnded(pid) {
   try {
     if (localStorage.getItem(`hoc_posttest_${pid}`)) return true;
     if (localStorage.getItem(`hoc_session_finished_${pid}`)) return true;
-    const start = localStorage.getItem(`hoc_session_start_${pid}`);
-    if (start && Date.now() - parseInt(start, 10) >= 1800 * 1000) {
-      localStorage.setItem(`hoc_session_finished_${pid}`, 'true');
-      return true;
-    }
     const win = localStorage.getItem(`hoc_checkin_win_${pid}`);
     if (win && parseInt(win, 10) > 6) {
-      localStorage.setItem(`hoc_session_finished_${pid}`, 'true');
-      return true;
-    }
-    const min = localStorage.getItem(`hoc_minute_num_${pid}`);
-    if (min && parseInt(min, 10) > 30) {
       localStorage.setItem(`hoc_session_finished_${pid}`, 'true');
       return true;
     }
@@ -38,7 +28,23 @@ function isGameEnded(pid) {
 }
 
 export default function App() {
-  const [currentLevelIndex, setCurrentLevelIndex] = useState(0);
+  const [maxUnlockedIndex, setMaxUnlockedIndex] = useState(() => {
+    try {
+      const pid = localStorage.getItem('hoc_participant_id');
+      if (!pid) return 0;
+      const saved = localStorage.getItem(`hoc_unlocked_idx_${pid}`);
+      const val = saved ? parseInt(saved, 10) : 0;
+      return Number.isNaN(val) ? 0 : Math.min(LEVELS.length - 1, Math.max(0, val));
+    } catch {
+      return 0;
+    }
+  });
+  const maxUnlockedIndexRef = useRef(maxUnlockedIndex);
+  useEffect(() => {
+    maxUnlockedIndexRef.current = maxUnlockedIndex;
+  }, [maxUnlockedIndex]);
+
+  const [currentLevelIndex, setCurrentLevelIndex] = useState(() => maxUnlockedIndex);
   const [currentTierFilter, setCurrentTierFilter] = useState('all');
   const [studyComplete, setStudyComplete] = useState(() => {
     try {
@@ -134,6 +140,8 @@ export default function App() {
     setWelcomeOpen(false);
     if (!pretestCompleted) {
       setPretestOpen(true);
+    } else if (!studyComplete && !isGameEnded(participantId)) {
+      setIsTimerRunning(true);
     }
   };
 
@@ -149,6 +157,28 @@ export default function App() {
     } catch {}
     setLoginOpen(false);
     showToast(`👋 Logged in as ${id}!`);
+
+    // Restore unlocked level progress for this participant
+    let unlockedIdx = 0;
+    try {
+      const savedUnlocked = localStorage.getItem(`hoc_unlocked_idx_${id}`);
+      if (savedUnlocked !== null) {
+        unlockedIdx = Math.min(LEVELS.length - 1, Math.max(0, parseInt(savedUnlocked, 10) || 0));
+      } else {
+        const { data: solvedRows } = await supabase
+          .from('puzzle_logs')
+          .select('level_id')
+          .eq('participant_id', id);
+        if (solvedRows && solvedRows.length > 0) {
+          const maxSolvedId = Math.max(...solvedRows.map((r) => Number(r.level_id) || 0));
+          unlockedIdx = Math.min(LEVELS.length - 1, Math.max(0, maxSolvedId));
+          localStorage.setItem(`hoc_unlocked_idx_${id}`, String(unlockedIdx));
+        }
+      }
+    } catch {}
+    maxUnlockedIndexRef.current = unlockedIdx;
+    setMaxUnlockedIndex(unlockedIdx);
+    loadLevel(unlockedIdx);
 
     // Check localStorage first
     let isDone = !!localStorage.getItem(`hoc_pretest_${id}`);
@@ -196,10 +226,12 @@ export default function App() {
     } else if (isGameEnded(id)) {
       setSessionEndOpen(true);
       setIsTimerRunning(false);
-    }
-
-    if (!isDone) {
-      setWelcomeOpen(true);
+    } else if (!isDone) {
+      setWelcomeOpen(false);
+      setPretestOpen(true);
+      setIsTimerRunning(false);
+    } else {
+      setIsTimerRunning(true);
     }
   };
 
@@ -299,8 +331,61 @@ export default function App() {
   const puzzleStatsRef = useRef({
     attempts: 0,
     resets: 0,
-    crashes: 0
+    crashes: 0,
+    idleSeconds: 0,
+    loggedSolve: false
   });
+
+  // Helper to inspect AST nodes recursively for concept mastery (loops / conditionals)
+  const analyzeExecutionTree = useCallback((nodes = []) => {
+    let usedLoops = false;
+    let usedConditionals = false;
+    const walk = (list) => {
+      for (const n of list || []) {
+        if (n.type === 'repeat_times' || n.type === 'repeat_until') usedLoops = true;
+        if (n.type === 'if_path' || n.type === 'if_else') usedConditionals = true;
+        if (n.body) walk(n.body);
+        if (n.elseBody) walk(n.elseBody);
+      }
+    };
+    walk(nodes);
+    return { usedLoops, usedConditionals };
+  }, []);
+
+  const recordPuzzleLog = useCallback(
+    (levelObj, status = 'solved', pidOverride = '') => {
+      const pid = pidOverride || participantId || localStorage.getItem('hoc_participant_id');
+      if (!pid || !levelObj) return;
+
+      const ws = workspaceInstanceRef.current;
+      const tree = ws ? ws.getExecutionTree() : [];
+      const blocksUsed = ws ? ws.getAllBlocksFlat().length : tree.length;
+      const maxAllowed = levelObj.maxBlocks || 0;
+      const timeSpentSec = Math.max(1, Math.round((Date.now() - puzzleStartTimeRef.current) / 1000));
+      const { usedLoops, usedConditionals } = analyzeExecutionTree(tree);
+      const isOptimal = status === 'solved' && maxAllowed > 0 && blocksUsed <= maxAllowed;
+      const submittedCode = ws ? ws.getJavaScriptCode() : '';
+
+      dbInsert('puzzle_logs', {
+        participant_id: pid,
+        level_id: levelObj.id,
+        tier: levelObj.tier ? (TIERS[levelObj.tier]?.name || levelObj.tier) : 'Easy',
+        time_seconds: timeSpentSec,
+        attempts: puzzleStatsRef.current.attempts,
+        resets: puzzleStatsRef.current.resets,
+        crashes: puzzleStatsRef.current.crashes,
+        blocks_used: blocksUsed,
+        optimal_blocks: maxAllowed,
+        is_optimal: isOptimal,
+        used_loops: usedLoops,
+        used_conditionals: usedConditionals,
+        idle_seconds: puzzleStatsRef.current.idleSeconds || 0,
+        status,
+        submitted_code: submittedCode
+      });
+    },
+    [participantId, analyzeExecutionTree]
+  );
 
   // Track user activity to measure idle time
   useEffect(() => {
@@ -341,7 +426,7 @@ export default function App() {
       ws.init();
       workspaceInstanceRef.current = ws;
 
-      const level = LEVELS[0];
+      const level = LEVELS[currentLevelIndex] || LEVELS[0];
       renderer.init(level);
       ws.loadLevel(level);
     }
@@ -359,6 +444,20 @@ export default function App() {
       if (index < 0 || index >= LEVELS.length) return;
       const pid = localStorage.getItem('hoc_participant_id');
       if (isGameEnded(pid)) return;
+      if (index > maxUnlockedIndexRef.current) {
+        showToast('🔒 Solve the current puzzle first to unlock this level!');
+        return;
+      }
+
+      // If switching to a different puzzle before solving after making attempts, log as 'skipped'
+      if (
+        index !== currentLevelIndexRef.current &&
+        !puzzleStatsRef.current.loggedSolve &&
+        (puzzleStatsRef.current.attempts > 0 || puzzleStatsRef.current.resets > 0)
+      ) {
+        recordPuzzleLog(LEVELS[currentLevelIndexRef.current], 'skipped', pid);
+      }
+
       runCanceledRef.current = true;
       setIsRunning(false);
       setCurrentLevelIndex(index);
@@ -369,7 +468,9 @@ export default function App() {
       puzzleStatsRef.current = {
         attempts: 0,
         resets: 0,
-        crashes: 0
+        crashes: 0,
+        idleSeconds: 0,
+        loggedSolve: false
       };
       if (mazeRendererRef.current) {
         mazeRendererRef.current.init(level);
@@ -378,7 +479,7 @@ export default function App() {
         workspaceInstanceRef.current.loadLevel(level);
       }
     },
-    []
+    [recordPuzzleLog]
   );
 
   // Handle Tier Selection
@@ -399,6 +500,7 @@ export default function App() {
     if (
       !participantId ||
       !isTimerRunning ||
+      welcomeOpen ||
       checkinOpen ||
       pretestOpen ||
       loginOpen ||
@@ -433,6 +535,7 @@ export default function App() {
       // Track idle seconds (>3s of inactivity)
       if (Date.now() - lastActivityTimeRef.current > 3000) {
         minuteStatsRef.current.idleSeconds += 1;
+        puzzleStatsRef.current.idleSeconds += 1;
       }
 
       // Track active puzzle level
@@ -502,8 +605,8 @@ export default function App() {
 
         // 3. Check window completion
         if (next <= 0) {
-          // If all 6 check-in windows (30 minutes) are complete:
-          if (checkinWindow >= 6) {
+          // If all 6 check-in windows (30 minutes) have already been submitted:
+          if (checkinWindow > 6) {
             setIsTimerRunning(false);
             try {
               localStorage.setItem(`hoc_session_finished_${participantId}`, 'true');
@@ -514,7 +617,7 @@ export default function App() {
             return 0;
           }
 
-          // Otherwise, 5-minute interval reached -> trigger check-in
+          // Otherwise, 5-minute interval reached -> trigger check-in (#1 through #6)
           soundFX.playTimerChime();
           setCheckinOpen(true);
           return 0;
@@ -527,6 +630,7 @@ export default function App() {
     return () => clearInterval(interval);
   }, [
     isTimerRunning,
+    welcomeOpen,
     checkinOpen,
     pretestOpen,
     loginOpen,
@@ -566,6 +670,7 @@ export default function App() {
     });
     setPretestOpen(false);
     setPretestCompleted(true);
+    setWelcomeOpen(true);
     showToast(`✨ Pre-test submitted! Participant: ${data.participantId || 'P01'}`);
     soundFX.playWin();
   };
@@ -626,6 +731,13 @@ export default function App() {
 
     // If 6 check-ins completed (30-min gameplay session complete), show Session Over modal!
     if (data.window >= 6) {
+      if (
+        !puzzleStatsRef.current.loggedSolve &&
+        (puzzleStatsRef.current.attempts > 0 || puzzleStatsRef.current.resets > 0)
+      ) {
+        puzzleStatsRef.current.loggedSolve = true;
+        recordPuzzleLog(LEVELS[currentLevelIndexRef.current], 'timeout', data.participantId);
+      }
       try {
         localStorage.setItem(`hoc_session_finished_${data.participantId}`, 'true');
       } catch {}
@@ -1015,24 +1127,20 @@ export default function App() {
 
       // ── Record Puzzle Completion Log ──
       const solvedLevel = LEVELS[currentLevelIndex];
-      const timeSpentSec = Math.max(1, Math.round((Date.now() - puzzleStartTimeRef.current) / 1000));
-      const treeBlocks = tree.length;
-      const maxAllowed = solvedLevel?.maxBlocks || 0;
-      dbInsert('puzzle_logs', {
-        participant_id: participantId,
-        level_id: solvedLevel.id,
-        tier: solvedLevel.tier ? (TIERS[solvedLevel.tier]?.name || solvedLevel.tier) : 'Easy',
-        time_seconds: timeSpentSec,
-        attempts: puzzleStatsRef.current.attempts,
-        resets: puzzleStatsRef.current.resets,
-        crashes: puzzleStatsRef.current.crashes,
-        blocks_used: treeBlocks,
-        optimal_blocks: maxAllowed
-      });
+      puzzleStatsRef.current.loggedSolve = true;
+      recordPuzzleLog(solvedLevel, 'solved');
 
       soundFX.playWin();
       setIsRunning(false);
       const nextIndex = currentLevelIndex + 1;
+
+      if (nextIndex > maxUnlockedIndexRef.current && nextIndex < LEVELS.length) {
+        maxUnlockedIndexRef.current = nextIndex;
+        setMaxUnlockedIndex(nextIndex);
+        try {
+          localStorage.setItem(`hoc_unlocked_idx_${participantId || 'default'}`, String(nextIndex));
+        } catch {}
+      }
 
       if (nextIndex < STUDY_LEVEL_COUNT) {
         showToast(`🎉 Puzzle #${solvedLevel.id} Solved! Jumping to Puzzle #${LEVELS[nextIndex].id}...`);
@@ -1081,6 +1189,7 @@ export default function App() {
       {/* Site Header */}
       <Header
         currentLevelIndex={currentLevelIndex}
+        maxUnlockedIndex={maxUnlockedIndex}
         currentTierFilter={currentTierFilter}
         studyComplete={studyComplete}
         onSelectLevel={loadLevel}
@@ -1282,7 +1391,7 @@ export default function App() {
         }}
         // Welcome banner modal
         welcomeOpen={welcomeOpen && !studyComplete}
-        onCloseWelcome={() => setWelcomeOpen(false)}
+        onCloseWelcome={handleStartFromWelcome}
         onStartFromWelcome={handleStartFromWelcome}
         onOpenPretestFromWelcome={handleOpenPretestFromWelcome}
         onSetParticipantId={setParticipantId}

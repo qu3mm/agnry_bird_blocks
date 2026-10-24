@@ -440,7 +440,9 @@ class BlockWorkspace {
 
         const newStack = document.createElement("div");
         newStack.className = "block-stack block-stack-dragging";
-        this.workspaceEl.appendChild(newStack);
+        newStack.style.position = "fixed";
+        newStack.style.zIndex = "99999";
+        document.body.appendChild(newStack);
 
         const direction = e.currentTarget.querySelector(".block-param-turn")?.value;
         const newBlock = this.createBlock(type, direction ? { direction } : {});
@@ -450,15 +452,17 @@ class BlockWorkspace {
         const offsetX = 30;
         const offsetY = 16;
 
-        newStack.style.left = `${clientX - wsRect.left - offsetX}px`;
-        newStack.style.top = `${clientY - wsRect.top - offsetY}px`;
+        newStack.style.left = `${clientX - offsetX}px`;
+        newStack.style.top = `${clientY - offsetY}px`;
 
         this.workspaceEl.classList.add("workspace-dragging-active");
         if (this.toolboxEl) this.toolboxEl.classList.add("workspace-dragging-active");
 
         this.activeDrag = {
             stack: newStack,
+            isRoot: false,
             isNew: true,
+            hasEnteredWorkspace: clientX >= wsRect.left + 20,
             offsetX: offsetX,
             offsetY: offsetY
         };
@@ -471,7 +475,6 @@ class BlockWorkspace {
         const clientX = e.clientX || (e.touches && e.touches[0].clientX);
         const clientY = e.clientY || (e.touches && e.touches[0].clientY);
 
-        const wsRect = this.workspaceEl.getBoundingClientRect();
         const bRect = blockEl.getBoundingClientRect();
         const offsetX = clientX - bRect.left;
         const offsetY = clientY - bRect.top;
@@ -486,6 +489,7 @@ class BlockWorkspace {
                 stack: rootStack,
                 isRoot: true,
                 isNew: false,
+                hasEnteredWorkspace: true,
                 offsetX: offsetX,
                 offsetY: offsetY
             };
@@ -495,9 +499,11 @@ class BlockWorkspace {
         // If dragging any child block: detach it and any subsequent siblings into a new stack!
         const newStack = document.createElement("div");
         newStack.className = "block-stack block-stack-dragging";
-        newStack.style.left = `${bRect.left - wsRect.left}px`;
-        newStack.style.top = `${bRect.top - wsRect.top}px`;
-        this.workspaceEl.appendChild(newStack);
+        newStack.style.position = "fixed";
+        newStack.style.zIndex = "99999";
+        newStack.style.left = `${bRect.left}px`;
+        newStack.style.top = `${bRect.top}px`;
+        document.body.appendChild(newStack);
 
         this.workspaceEl.classList.add("workspace-dragging-active");
         if (this.toolboxEl) this.toolboxEl.classList.add("workspace-dragging-active");
@@ -514,6 +520,7 @@ class BlockWorkspace {
             stack: newStack,
             isRoot: false,
             isNew: false,
+            hasEnteredWorkspace: true,
             offsetX: offsetX,
             offsetY: offsetY
         };
@@ -526,11 +533,18 @@ class BlockWorkspace {
             const clientY = e.clientY || (e.touches && e.touches[0].clientY);
 
             const wsRect = this.workspaceEl.getBoundingClientRect();
-            const posX = clientX - wsRect.left - this.activeDrag.offsetX;
-            const posY = clientY - wsRect.top - this.activeDrag.offsetY;
-
-            this.activeDrag.stack.style.left = `${posX}px`;
-            this.activeDrag.stack.style.top = `${posY}px`;
+            if (this.activeDrag.isRoot) {
+                const posX = clientX - wsRect.left - this.activeDrag.offsetX;
+                const posY = clientY - wsRect.top - this.activeDrag.offsetY;
+                this.activeDrag.stack.style.left = `${posX}px`;
+                this.activeDrag.stack.style.top = `${posY}px`;
+            } else {
+                this.activeDrag.stack.style.left = `${clientX - this.activeDrag.offsetX}px`;
+                this.activeDrag.stack.style.top = `${clientY - this.activeDrag.offsetY}px`;
+                if (!this.activeDrag.hasEnteredWorkspace && clientX >= wsRect.left + 20) {
+                    this.activeDrag.hasEnteredWorkspace = true;
+                }
+            }
 
             // Trash targets: .trash-zone, toolbox, or dragged to left of workspace
             const trEl = this.trashZoneEl || this.workspaceEl.querySelector(".trash-zone") || document.getElementById("workspace-trash");
@@ -550,11 +564,12 @@ class BlockWorkspace {
             ) : false;
 
             const isLeftOfWorkspace = clientX < wsRect.left + 15;
-            const isTrashHover = (isOverTrash || isOverToolbox || isLeftOfWorkspace) && !this.activeDrag.isRoot;
+            const isOutsideTrash = (isOverToolbox || isLeftOfWorkspace) && this.activeDrag.hasEnteredWorkspace;
+            const isTrashHover = (isOverTrash || isOutsideTrash) && !this.activeDrag.isRoot;
 
             if (isTrashHover) {
                 if (trEl) trEl.classList.add("trash-active");
-                if (this.toolboxEl && (isOverToolbox || isLeftOfWorkspace)) {
+                if (this.toolboxEl && isOutsideTrash) {
                     this.toolboxEl.classList.add("toolbox-trash-active");
                 } else if (this.toolboxEl) {
                     this.toolboxEl.classList.remove("toolbox-trash-active");
@@ -601,8 +616,9 @@ class BlockWorkspace {
             const isTrash = (isOverTrash || isOverToolbox || isLeftOfWorkspace) && !this.activeDrag.isRoot;
 
             if (isTrash) {
+                const playTrashSound = this.activeDrag.hasEnteredWorkspace || isOverTrash;
                 stack.remove();
-                window.soundFX?.playTrash();
+                if (playTrashSound) window.soundFX?.playTrash();
                 this.finishDrag();
                 return;
             }
@@ -613,6 +629,11 @@ class BlockWorkspace {
                 window.soundFX?.playSnap();
                 this.userHasDropped = true;
             } else if (!this.activeDrag.isRoot) {
+                stack.style.position = "";
+                stack.style.zIndex = "";
+                stack.style.left = `${clientX - wsRect.left + this.workspaceEl.scrollLeft - this.activeDrag.offsetX}px`;
+                stack.style.top = `${clientY - wsRect.top + this.workspaceEl.scrollTop - this.activeDrag.offsetY}px`;
+                this.workspaceEl.appendChild(stack);
                 this.userHasDropped = true;
             }
 

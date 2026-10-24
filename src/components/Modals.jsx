@@ -2353,7 +2353,7 @@ export default function Modals({
                         log !== undefined ? log.idle_seconds : '',
                         log !== undefined ? log.solved : ''
                       ]);
-                      if (m % 5 === 0 && m < 30) {
+                      if (m % 5 === 0 && m <= 30) {
                         rows.push([`Check-in ${m / 5}`, '', '', '', '', '', '']);
                       }
                     }
@@ -2428,7 +2428,7 @@ export default function Modals({
                       {[...Array(30)].map((_, i) => {
                         const minNum = i + 1;
                         const log = (minuteLogsData || []).find((r) => r.minute_number === minNum);
-                        const isDivider = minNum % 5 === 0 && minNum < 30;
+                        const isDivider = minNum % 5 === 0 && minNum <= 30;
                         const checkinNum = minNum / 5;
                         return (
                           <React.Fragment key={minNum}>

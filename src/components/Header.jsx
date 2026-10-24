@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Badge } from '@/components/ui/badge';
 import { TIERS, LEVELS } from '../data/levels';
 
 export default function Header({
   currentLevelIndex,
+  maxUnlockedIndex = 0,
   onSelectLevel,
   isRunning,
   timerSeconds,
@@ -66,15 +68,7 @@ export default function Header({
           title="Click to view Angry Bird Blocks welcome banner"
           onClick={onOpenWelcome}
         >
-          <div className="brand-icon-box">
-            <img
-              src="/sprites/slingshot.png"
-              alt="Slingshot"
-              onError={(e) => {
-                e.target.src = '/sprites/bird_red.png';
-              }}
-            />
-          </div>
+          
           <div className="brand-text-column">
             <div className="brand-title-row">
               <span className="brand-text-gold">ANGRY BIRDS</span>
@@ -90,53 +84,72 @@ export default function Header({
       {/* 2. Center: Tier Switcher + Clean Level Bubbles (5 to 8 bubbles max) */}
       <div className="header-center">
         {/* Tier Tabs: Easy, Medium, Hard */}
-        <div className="tier-pills-bar">
-          <button
-            className={`tier-pill-opt ${activeTier === 'easy' ? 'active' : ''}`}
-            onClick={() => {
-              setActiveTier('easy');
-              const firstEasy = LEVELS.findIndex((l) => l.tier === 'easy');
-              if (firstEasy !== -1 && currentLevel.tier !== 'easy') onSelectLevel(firstEasy);
-            }}
-          >
-            Easy (1-5)
-          </button>
-          <button
-            className={`tier-pill-opt ${activeTier === 'medium' ? 'active' : ''}`}
-            onClick={() => {
-              setActiveTier('medium');
-              const firstMed = LEVELS.findIndex((l) => l.tier === 'medium');
-              if (firstMed !== -1 && currentLevel.tier !== 'medium') onSelectLevel(firstMed);
-            }}
-          >
-            Medium (6-13)
-          </button>
-          <button
-            className={`tier-pill-opt ${activeTier === 'hard' ? 'active' : ''}`}
-            onClick={() => {
-              setActiveTier('hard');
-              const firstHard = LEVELS.findIndex((l) => l.tier === 'hard');
-              if (firstHard !== -1 && currentLevel.tier !== 'hard') onSelectLevel(firstHard);
-            }}
-          >
-            Hard (14-20)
-          </button>
-        </div>
+        {(() => {
+          const firstEasy = LEVELS.findIndex((l) => l.tier === 'easy');
+          const firstMed = LEVELS.findIndex((l) => l.tier === 'medium');
+          const firstHard = LEVELS.findIndex((l) => l.tier === 'hard');
+          const isMedLocked = firstMed !== -1 && maxUnlockedIndex < firstMed;
+          const isHardLocked = firstHard !== -1 && maxUnlockedIndex < firstHard;
+
+          return (
+            <div className="tier-pills-bar">
+              <button
+                className={`tier-pill-opt ${activeTier === 'easy' ? 'active' : ''}`}
+                onClick={() => {
+                  setActiveTier('easy');
+                  if (firstEasy !== -1 && currentLevel.tier !== 'easy') onSelectLevel(firstEasy);
+                }}
+              >
+                Easy (1-5)
+              </button>
+              <button
+                className={`tier-pill-opt ${activeTier === 'medium' ? 'active' : ''} ${isMedLocked ? 'locked' : ''}`}
+                disabled={isMedLocked}
+                title={isMedLocked ? '🔒 Locked — Complete all Easy (1–5) puzzles first!' : 'Medium Tier (Puzzles 6–13)'}
+                onClick={() => {
+                  if (isMedLocked) return;
+                  setActiveTier('medium');
+                  if (firstMed !== -1 && currentLevel.tier !== 'medium') onSelectLevel(firstMed);
+                }}
+              >
+                {isMedLocked ? '🔒 ' : ''}Medium (6-13)
+              </button>
+              <button
+                className={`tier-pill-opt ${activeTier === 'hard' ? 'active' : ''} ${isHardLocked ? 'locked' : ''}`}
+                disabled={isHardLocked}
+                title={isHardLocked ? '🔒 Locked — Complete all Medium (6–13) puzzles first!' : 'Hard Tier (Puzzles 14–20)'}
+                onClick={() => {
+                  if (isHardLocked) return;
+                  setActiveTier('hard');
+                  if (firstHard !== -1 && currentLevel.tier !== 'hard') onSelectLevel(firstHard);
+                }}
+              >
+                {isHardLocked ? '🔒 ' : ''}Hard (14-20)
+              </button>
+            </div>
+          );
+        })()}
 
         {/* Level navigation */}
         <nav className="level-nav-container" id="level-bubbles" aria-label="Puzzle Navigation">
           {tierLevels.map((lvl) => {
             const levelIndex = LEVELS.indexOf(lvl);
             const isActive = levelIndex === currentLevelIndex;
-            const isCompleted = levelIndex < currentLevelIndex;
+            const isCompleted = levelIndex < maxUnlockedIndex;
+            const isLocked = levelIndex > maxUnlockedIndex;
 
             return (
               <div key={lvl.id} className="level-bubble-cell">
                 <button
-                  className={`level-bubble tier-bubble-${lvl.tier} ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}`}
-                  title={`${lvl.title} (${TIERS[lvl.tier]?.name})`}
+                  className={`level-bubble tier-bubble-${lvl.tier} ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''} ${isLocked ? 'locked' : ''}`}
+                  disabled={isLocked}
+                  title={
+                    isLocked
+                      ? `🔒 Locked — Solve Puzzle ${lvl.id - 1} first!`
+                      : `${lvl.title} (${TIERS[lvl.tier]?.name})`
+                  }
                   onClick={() => {
-                    if (!isRunning) onSelectLevel(levelIndex);
+                    if (!isRunning && !isLocked) onSelectLevel(levelIndex);
                   }}
                 >
                   {lvl.id}
@@ -191,20 +204,26 @@ export default function Header({
 
         {/* Study Menu Dropdown (Clean, spacious, uncrowded) */}
         <div className="relative" ref={menuRef}>
-          <button
-            className="px-2.5 py-1 bg-[#5a2805] hover:bg-[#78350f] text-[#ffd13b] border border-[#78350f] rounded-lg font-bold text-xs shadow-[0_2px_0_#3e1b04] active:translate-y-0.5 flex items-center gap-1.5 transition cursor-pointer"
-            onClick={() => setMenuOpen(!menuOpen)}
-            title="Study Survey & Tools Menu"
+          <Badge
+            variant="outline"
+            render={
+              <button
+                type="button"
+                onClick={() => setMenuOpen(!menuOpen)}
+                title="Study Survey & Tools Menu"
+              />
+            }
+            className="bg-[#5a2805] hover:bg-[#78350f] text-[#ffd13b] border-[1.5px] border-[#92400e] font-extrabold text-xs shadow-[0_2px_0_#3e1b04] active:translate-y-0.5 transition cursor-pointer"
           >
             <span>📋</span>
             <span>Menu</span>
             <span className="text-[10px]">{menuOpen ? '▲' : '▼'}</span>
-          </button>
+          </Badge>
 
           {menuOpen && (
-            <div className="absolute right-0 top-full mt-1.5 w-48 bg-[#2b1404] border-2 border-[#b45309] rounded-xl shadow-2xl py-1.5 z-50 flex flex-col gap-1 backdrop-blur-md">
+            <div className="header-menu-dropdown absolute right-0 top-full mt-1.5 w-48 bg-[#2b1404] border-2 border-[#b45309] rounded-xl shadow-2xl z-50 flex flex-col gap-1 backdrop-blur-md">
               <button
-                className="w-full px-3 py-2 text-left text-xs font-bold text-[#fef08a] hover:bg-[#5a2805] flex items-center gap-2 transition"
+                className="header-menu-item w-full text-left text-xs font-bold text-[#fef08a] hover:bg-[#5a2805] flex items-center gap-2 transition"
                 onClick={() => {
                   setMenuOpen(false);
                   onOpenLogin();
@@ -214,7 +233,7 @@ export default function Header({
                 <span>Switch / Login ID</span>
               </button>
               <button
-                className="w-full px-3 py-2 text-left text-xs font-bold text-[#fef08a] hover:bg-[#5a2805] flex items-center gap-2 transition"
+                className="header-menu-item w-full text-left text-xs font-bold text-[#fef08a] hover:bg-[#5a2805] flex items-center gap-2 transition"
                 onClick={() => {
                   setMenuOpen(false);
                   onOpenWelcome();
@@ -224,7 +243,7 @@ export default function Header({
                 <span>Welcome Banner</span>
               </button>
               <button
-                className="w-full px-3 py-2 text-left text-xs font-bold text-[#fef08a] hover:bg-[#5a2805] flex items-center gap-2 transition"
+                className="header-menu-item w-full text-left text-xs font-bold text-[#fef08a] hover:bg-[#5a2805] flex items-center gap-2 transition"
                 onClick={() => {
                   setMenuOpen(false);
                   onOpenPretest();
@@ -234,7 +253,7 @@ export default function Header({
                 <span>Pre-test Survey</span>
               </button>
               <button
-                className="w-full px-3 py-2 text-left text-xs font-bold text-[#fef08a] hover:bg-[#5a2805] flex items-center gap-2 transition"
+                className="header-menu-item w-full text-left text-xs font-bold text-[#fef08a] hover:bg-[#5a2805] flex items-center gap-2 transition"
                 onClick={() => {
                   setMenuOpen(false);
                   onOpenPosttest();
@@ -244,7 +263,7 @@ export default function Header({
                 <span>Post-test Survey</span>
               </button>
               <button
-                className="w-full px-3 py-2 text-left text-xs font-bold text-[#fbbf24] hover:bg-[#5a2805] flex items-center gap-2 transition"
+                className="header-menu-item w-full text-left text-xs font-bold text-[#fbbf24] hover:bg-[#5a2805] flex items-center gap-2 transition"
                 onClick={() => {
                   setMenuOpen(false);
                   onTestCheckin();
@@ -254,7 +273,7 @@ export default function Header({
                 <span>Trigger Check-in</span>
               </button>
               <button
-                className="w-full px-3 py-2 text-left text-xs font-bold text-[#fef08a] hover:bg-[#5a2805] flex items-center gap-2 transition"
+                className="header-menu-item w-full text-left text-xs font-bold text-[#fef08a] hover:bg-[#5a2805] flex items-center gap-2 transition"
                 onClick={() => {
                   setMenuOpen(false);
                   onViewHistory();

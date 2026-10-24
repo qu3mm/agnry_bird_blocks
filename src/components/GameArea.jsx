@@ -16,7 +16,7 @@ export default function GameArea({
   onClean
 }) {
   const level = LEVELS[currentLevelIndex] || LEVELS[0];
-  const targetMoves = level.maxBlocks ? level.maxBlocks - 1 : 2;
+  const optimalBlocks = level.maxBlocks || 3;
 
   // Draggable Splitter state between Maze Column and Toolbox Column
   const [mazeWidth, setMazeWidth] = React.useState(480);
@@ -63,7 +63,10 @@ export default function GameArea({
             <span className="font-black text-[#ffcc00] text-xs sm:text-[13px] tracking-wide uppercase drop-shadow-[0_2px_0_#3e1b04]">
               PIGGY ISLAND: STAGE 1-{level.id}
             </span>
-            <Badge variant="outline" className=" inline-flex items-center justify-center text-[10.5px] font-black uppercase tracking-wider leading-none text-[#ffd233] bg-[#3b1a04] px-4 py-1.5 rounded-full border border-[#5a2805] shadow-inner">
+            <Badge
+              variant="outline"
+              className="text-[11px] font-extrabold uppercase tracking-wider text-[#ffd233] bg-[#3b1a04] border border-[#6b3410] shadow-inner"
+            >
               Grid: 8 x 8
             </Badge>
           </div>
@@ -81,7 +84,7 @@ export default function GameArea({
 
               {/* Direction Status Strip Floating over bottom edge of maze */}
               <div className="absolute bottom-2 left-2 right-2 z-10 bg-black/75 backdrop-blur-[1px] text-[#c4e97a] border border-black/40 rounded px-2 py-0.5 text-[10.5px] font-bold text-center shadow-md pointer-events-none">
-                Straight Ahead: Move {targetMoves} steps ➔ Smash Pig!
+                Optimal Goal: Solve within {optimalBlocks} blocks ➔ Smash Pig!
               </div>
             </div>
 
@@ -137,7 +140,10 @@ export default function GameArea({
             <span className="font-black text-[#ffcc00] text-xs sm:text-[13px] tracking-wide uppercase drop-shadow-[0_2px_0_#3e1b04] flex items-center gap-1.5 whitespace-nowrap">
               <span>☘</span> BLOCK TOOLBOX
             </span>
-            <Badge variant="outline" className="h-auto border-[#86efac] bg-[#15803d] px-5 py-2 text-[10px] font-black uppercase leading-none tracking-wider text-[#dcfce7] shadow-sm hover:bg-[#15803d]">
+            <Badge
+              variant="outline"
+              className="border border-[#86efac] bg-[#15803d] text-[11px] font-extrabold uppercase tracking-wider text-[#dcfce7] shadow-sm hover:bg-[#15803d]"
+            >
               CODE BLOCKS
             </Badge>
           </div>
@@ -171,32 +177,30 @@ export default function GameArea({
             </span>
 
             <div className="flex items-center gap-2">
-              <button
-                className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap px-3.5 py-1.5 bg-gradient-to-b from-[#f59e0b] to-[#d97706] hover:from-[#fbbf24] hover:to-[#f59e0b] text-[#3e1b04] border-2 border-[#b45309] rounded-full font-black text-[11px] uppercase tracking-wide leading-none shadow-[0_2.5px_0_#78350f] active:translate-y-0.5 transition cursor-pointer"
-                onClick={onClean}
-                title="Tidy workspace"
+              <Badge
+                variant="outline"
+                render={<button type="button" onClick={onClean} title="Tidy workspace" />}
+                className="bg-gradient-to-b from-[#f59e0b] to-[#d97706] hover:from-[#fbbf24] hover:to-[#f59e0b] text-[#3e1b04] border-2 border-[#b45309] font-extrabold text-[11px] uppercase tracking-wide shadow-[0_2px_0_#78350f] active:translate-y-0.5 transition cursor-pointer"
               >
-                <Sparkles className="w-3.5 h-3.5 text-[#78350f] flex-shrink-0" />
+                <Sparkles className="text-[#78350f]" />
                 <span>Clean</span>
-              </button>
-              <button
-                className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap px-3.5 py-1.5 bg-gradient-to-b from-[#f59e0b] to-[#d97706] hover:from-[#fbbf24] hover:to-[#f59e0b] text-[#3e1b04] border-2 border-[#b45309] rounded-full font-black text-[11px] uppercase tracking-wide leading-none shadow-[0_2.5px_0_#78350f] active:translate-y-0.5 transition cursor-pointer"
-                id="btn-start-over"
-                onClick={onStartOver}
-                title="Reset workspace"
+              </Badge>
+              <Badge
+                variant="outline"
+                render={<button type="button" id="btn-start-over" onClick={onStartOver} title="Reset workspace" />}
+                className="bg-gradient-to-b from-[#f59e0b] to-[#d97706] hover:from-[#fbbf24] hover:to-[#f59e0b] text-[#3e1b04] border-2 border-[#b45309] font-extrabold text-[11px] uppercase tracking-wide shadow-[0_2px_0_#78350f] active:translate-y-0.5 transition cursor-pointer"
               >
-                <RotateCcw className="w-3.5 h-3.5 text-[#991b1b] shrink-0" />
+                <RotateCcw className="text-[#991b1b]" />
                 <span>Start Over</span>
-              </button>
-              <button
-                className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap px-3.5 py-1.5 bg-gradient-to-b from-[#f59e0b] to-[#d97706] hover:from-[#fbbf24] hover:to-[#f59e0b] text-[#3e1b04] border-2 border-[#b45309] rounded-full font-black text-[11px] uppercase tracking-wide leading-none shadow-[0_2.5px_0_#78350f] active:translate-y-0.5 transition cursor-pointer"
-                id="btn-show-code"
-                onClick={onShowCode}
-                title="View code"
+              </Badge>
+              <Badge
+                variant="outline"
+                render={<button type="button" id="btn-show-code" onClick={onShowCode} title="View code" />}
+                className="bg-gradient-to-b from-[#f59e0b] to-[#d97706] hover:from-[#fbbf24] hover:to-[#f59e0b] text-[#3e1b04] border-2 border-[#b45309] font-extrabold text-[11px] uppercase tracking-wide shadow-[0_2px_0_#78350f] active:translate-y-0.5 transition cursor-pointer"
               >
-                <Code2 className="w-3.5 h-3.5 text-[#1e3a8a] flex-shrink-0" />
+                <Code2 className="text-[#1e3a8a]" />
                 <span>Code</span>
-              </button>
+              </Badge>
             </div>
           </div>
 

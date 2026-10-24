@@ -47,9 +47,10 @@
 }
 
 .block-stack.block-stack-dragging {
-    z-index: 10000 !important;
-    opacity: 0.96;
-    filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.42)) scale(1.02);
+    z-index: 99999 !important;
+    opacity: 1 !important;
+    filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.42));
+    transform: scale(1.03);
     cursor: grabbing !important;
     pointer-events: none;
 }

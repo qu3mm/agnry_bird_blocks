@@ -12,7 +12,7 @@ export default function InstructionBanner({ currentLevelIndex, onSpeak }) {
     : '/sprites/bird_red.png';
 
   const missionNum = String(level.id).padStart(2, '0');
-  const targetMoves = level.maxBlocks ? level.maxBlocks - 1 : 2;
+  const optimalBlocks = level.maxBlocks || 3;
   const missionTitle = (level.title.replace(/^Puzzle \d+:\s*/i, '') || 'SQUAWK THE BAD PIG').toUpperCase();
 
   // Format instruction text to display inline code block chips matching the reference
@@ -90,7 +90,7 @@ export default function InstructionBanner({ currentLevelIndex, onSpeak }) {
             MISSION {missionNum}: {missionTitle}
           </span>
           <span className="pill-badge pill-target">
-            🎯 Target: {targetMoves} Moves • {tierInfo.name}
+            🎯 Optimal: {optimalBlocks} Blocks • {tierInfo.name}
           </span>
           <span className="pill-badge pill-mastery">
             ★ 3-Star Mastery
