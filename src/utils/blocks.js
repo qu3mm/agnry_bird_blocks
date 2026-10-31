@@ -17,6 +17,7 @@ class BlockWorkspace {
     }
 
     init() {
+        this.destroy();
         this.setupDropIndicator();
         this.setupGlobalDragEvents();
         if (!this.trashZoneEl && this.workspaceEl) {
@@ -25,10 +26,23 @@ class BlockWorkspace {
     }
 
     setupDropIndicator() {
-        this.dropIndicator = document.createElement("div");
+        if (!this.workspaceEl) return;
+        this.dropIndicator = this.workspaceEl.querySelector(".block-snap-indicator") || document.createElement("div");
         this.dropIndicator.className = "block-snap-indicator";
         this.dropIndicator.style.display = "none";
-        this.workspaceEl.appendChild(this.dropIndicator);
+        if (!this.dropIndicator.parentElement) {
+            this.workspaceEl.appendChild(this.dropIndicator);
+        }
+    }
+
+    cancelActiveDrag() {
+        if (this.activeDrag?.stack && !this.activeDrag.isRoot) {
+            this.activeDrag.stack.remove();
+        }
+        document.body.querySelectorAll(":scope > .block-stack").forEach(el => el.remove());
+        if (this.activeDrag) {
+            this.finishDrag();
+        }
     }
 
     loadLevel(level) {
@@ -41,6 +55,7 @@ class BlockWorkspace {
     }
 
     clear() {
+        this.cancelActiveDrag();
         this.userHasDropped = false;
         this.workspaceEl.querySelectorAll(".block-stack").forEach(el => el.remove());
         this.updateBlockCount();
@@ -432,11 +447,14 @@ class BlockWorkspace {
 
     startDraggingFromToolbox(e, type) {
         if (e.target.tagName === "SELECT") return;
-        if (e.type === "touchstart") e.preventDefault();
+        if (e.type === "mousedown" && e.button !== 0) return;
+        e.preventDefault();
+        this.cancelActiveDrag();
         window.soundFX?.playClick();
 
-        const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-        const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+        const touch = e.touches && e.touches[0];
+        const clientX = e.clientX !== undefined ? e.clientX : (touch ? touch.clientX : 0);
+        const clientY = e.clientY !== undefined ? e.clientY : (touch ? touch.clientY : 0);
 
         const newStack = document.createElement("div");
         newStack.className = "block-stack block-stack-dragging";
@@ -470,10 +488,15 @@ class BlockWorkspace {
 
     startDraggingExistingBlock(e, blockEl) {
         e.stopPropagation();
-        if (e.type === "touchstart") e.preventDefault();
+        if (e.target.tagName === "SELECT") return;
+        if (e.type === "mousedown" && e.button !== 0) return;
+        if (this.activeDrag?.stack?.contains(blockEl)) return;
+        e.preventDefault();
+        this.cancelActiveDrag();
 
-        const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-        const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+        const touch = e.touches && e.touches[0];
+        const clientX = e.clientX !== undefined ? e.clientX : (touch ? touch.clientX : 0);
+        const clientY = e.clientY !== undefined ? e.clientY : (touch ? touch.clientY : 0);
 
         const bRect = blockEl.getBoundingClientRect();
         const offsetX = clientX - bRect.left;
@@ -529,8 +552,9 @@ class BlockWorkspace {
     setupGlobalDragEvents() {
         const onMove = (e) => {
             if (!this.activeDrag) return;
-            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            const touch = e.touches && e.touches[0];
+            const clientX = e.clientX !== undefined ? e.clientX : (touch ? touch.clientX : 0);
+            const clientY = e.clientY !== undefined ? e.clientY : (touch ? touch.clientY : 0);
 
             const wsRect = this.workspaceEl.getBoundingClientRect();
             if (this.activeDrag.isRoot) {
@@ -588,8 +612,9 @@ class BlockWorkspace {
         const onEnd = (e) => {
             if (!this.activeDrag) return;
 
-            const clientX = e.clientX || (e.changedTouches && e.changedTouches[0].clientX);
-            const clientY = e.clientY || (e.changedTouches && e.changedTouches[0].clientY);
+            const touch = (e.changedTouches && e.changedTouches[0]) || (e.touches && e.touches[0]);
+            const clientX = e.clientX !== undefined ? e.clientX : (touch ? touch.clientX : 0);
+            const clientY = e.clientY !== undefined ? e.clientY : (touch ? touch.clientY : 0);
 
             const stack = this.activeDrag.stack;
             stack.classList.remove("block-stack-dragging");
@@ -623,6 +648,10 @@ class BlockWorkspace {
                 return;
             }
 
+            if (!this.activeDrag.isRoot) {
+                this.checkForSnapTarget(clientX, clientY, stack);
+            }
+
             // Snap or leave as floating stack
             if (this.currentSnapTarget && !this.activeDrag.isRoot) {
                 this.executeSnap(this.currentSnapTarget, stack);
@@ -640,16 +669,24 @@ class BlockWorkspace {
             this.finishDrag();
         };
 
+        const onCancel = () => {
+            if (this.activeDrag) this.cancelActiveDrag();
+        };
+
         this._onMove = onMove;
         this._onEnd = onEnd;
+        this._onCancel = onCancel;
 
         window.addEventListener("mousemove", onMove);
         window.addEventListener("mouseup", onEnd);
         window.addEventListener("touchmove", onMove, { passive: false });
         window.addEventListener("touchend", onEnd);
+        window.addEventListener("touchcancel", onCancel);
+        window.addEventListener("blur", onCancel);
     }
 
     destroy() {
+        this.cancelActiveDrag();
         if (this._onMove) {
             window.removeEventListener("mousemove", this._onMove);
             window.removeEventListener("touchmove", this._onMove);
@@ -657,6 +694,10 @@ class BlockWorkspace {
         if (this._onEnd) {
             window.removeEventListener("mouseup", this._onEnd);
             window.removeEventListener("touchend", this._onEnd);
+        }
+        if (this._onCancel) {
+            window.removeEventListener("touchcancel", this._onCancel);
+            window.removeEventListener("blur", this._onCancel);
         }
     }
 
@@ -667,12 +708,17 @@ class BlockWorkspace {
         // 'when_run' stack cannot snap into another stack
         if (this.activeDrag?.isRoot) return;
 
+        // Top notch of the dragged stack (visual snap anchor)
+        const dRect = draggedStack.getBoundingClientRect();
+        const notchX = dRect.left + 32;
+        const notchY = dRect.top;
+
         // Search among all existing block-nodes outside of the dragged stack
         const candidateBlocks = Array.from(this.workspaceEl.querySelectorAll(".block-node"))
             .filter(el => !draggedStack.contains(el));
 
         let closest = null;
-        let minDistance = 45; // snap attraction threshold
+        let minDistance = 55; // snap attraction threshold
 
         for (const el of candidateBlocks) {
             const rect = el.getBoundingClientRect();
@@ -680,7 +726,10 @@ class BlockWorkspace {
             // 1. Target: Bottom of block (snap underneath)
             const bottomX = rect.left + 32;
             const bottomY = rect.bottom;
-            const distBottom = Math.hypot(cursorX - bottomX, cursorY - bottomY);
+            const distBottom = Math.min(
+                Math.hypot(cursorX - bottomX, cursorY - bottomY),
+                Math.hypot(notchX - bottomX, notchY - bottomY)
+            );
 
             if (distBottom < minDistance) {
                 minDistance = distBottom;
@@ -698,7 +747,10 @@ class BlockWorkspace {
                 const sRect = slot.getBoundingClientRect();
                 const slotX = sRect.left + 30;
                 const slotY = sRect.top + 16;
-                const distSlot = Math.hypot(cursorX - slotX, cursorY - slotY);
+                const distSlot = Math.min(
+                    Math.hypot(cursorX - slotX, cursorY - slotY),
+                    Math.hypot(notchX - slotX, notchY - slotY)
+                );
 
                 if (distSlot < minDistance) {
                     minDistance = distSlot;
@@ -804,6 +856,7 @@ class BlockWorkspace {
     }
 
     cleanWorkspace() {
+        this.cancelActiveDrag();
         const rootStack = this.workspaceEl.querySelector(".block-stack-root");
         if (rootStack) {
             rootStack.style.left = "30px";
