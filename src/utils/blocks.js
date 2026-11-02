@@ -35,9 +35,20 @@ class BlockWorkspace {
         }
     }
 
-    cancelActiveDrag() {
+    cancelActiveDrag(forceRemove = false) {
         if (this.activeDrag?.stack && !this.activeDrag.isRoot) {
-            this.activeDrag.stack.remove();
+            const stack = this.activeDrag.stack;
+            if (!forceRemove && !this.activeDrag.isNew && this.workspaceEl) {
+                stack.classList.remove("block-stack-dragging");
+                stack.classList.remove("drag-over-trash");
+                stack.style.position = "";
+                stack.style.zIndex = "";
+                stack.style.left = "40px";
+                stack.style.top = "40px";
+                this.workspaceEl.appendChild(stack);
+            } else {
+                stack.remove();
+            }
         }
         document.body.querySelectorAll(":scope > .block-stack").forEach(el => el.remove());
         if (this.activeDrag) {
@@ -55,7 +66,7 @@ class BlockWorkspace {
     }
 
     clear() {
-        this.cancelActiveDrag();
+        this.cancelActiveDrag(true);
         this.userHasDropped = false;
         this.workspaceEl.querySelectorAll(".block-stack").forEach(el => el.remove());
         this.updateBlockCount();
@@ -686,7 +697,7 @@ class BlockWorkspace {
     }
 
     destroy() {
-        this.cancelActiveDrag();
+        this.cancelActiveDrag(true);
         if (this._onMove) {
             window.removeEventListener("mousemove", this._onMove);
             window.removeEventListener("touchmove", this._onMove);
@@ -856,7 +867,7 @@ class BlockWorkspace {
     }
 
     cleanWorkspace() {
-        this.cancelActiveDrag();
+        this.cancelActiveDrag(true);
         const rootStack = this.workspaceEl.querySelector(".block-stack-root");
         if (rootStack) {
             rootStack.style.left = "30px";

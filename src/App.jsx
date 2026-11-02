@@ -130,7 +130,7 @@ export default function App() {
   const [pretestCompleted, setPretestCompleted] = useState(() => {
     try {
       const pid = localStorage.getItem('hoc_participant_id');
-      return !!localStorage.getItem(`hoc_pretest_${pid || 'default'}`) || !!localStorage.getItem('hoc_pretest_survey');
+      return !!(pid && localStorage.getItem(`hoc_pretest_${pid}`));
     } catch {
       return false;
     }
@@ -158,6 +158,36 @@ export default function App() {
     setLoginOpen(false);
     showToast(`👋 Logged in as ${id}!`);
 
+    // Restore per-participant timer, check-in window, and minute telemetry state
+    try {
+      const savedWin = localStorage.getItem(`hoc_checkin_win_${id}`);
+      setCheckinWindow(savedWin ? parseInt(savedWin, 10) : 1);
+
+      const savedStart = localStorage.getItem(`hoc_session_start_${id}`);
+      setSessionStartTime(savedStart ? parseInt(savedStart, 10) : null);
+
+      const isFinished = !!localStorage.getItem(`hoc_session_finished_${id}`);
+      const defaultSecs = timerMode === 'demo' ? 15 : 300;
+      const savedSecs = localStorage.getItem(`hoc_timer_secs_${id}`);
+      const parsedSecs = savedSecs ? parseInt(savedSecs, 10) : defaultSecs;
+      setTimerSeconds(isFinished ? 0 : (parsedSecs <= 0 ? defaultSecs : parsedSecs));
+
+      const storedMinLogs = JSON.parse(localStorage.getItem(`hoc_minute_logs_${id}`) || '[]');
+      loggedMinutesRef.current = new Set(storedMinLogs.map((r) => r.minute_number));
+      setMinuteLogsData(storedMinLogs);
+
+      const storedHistory = JSON.parse(localStorage.getItem(`hoc_checkin_history_${id}`) || '[]');
+      setHistoryData(storedHistory);
+
+      minuteStatsRef.current = {
+        puzzles: new Set(),
+        attempts: 0,
+        resets: 0,
+        solved: 0,
+        idleSeconds: 0
+      };
+    } catch {}
+
     // Restore unlocked level progress for this participant
     let unlockedIdx = 0;
     try {
@@ -167,10 +197,11 @@ export default function App() {
       } else {
         const { data: solvedRows } = await supabase
           .from('puzzle_logs')
-          .select('level_id')
+          .select('level_id, status')
           .eq('participant_id', id);
-        if (solvedRows && solvedRows.length > 0) {
-          const maxSolvedId = Math.max(...solvedRows.map((r) => Number(r.level_id) || 0));
+        const validSolved = (solvedRows || []).filter((r) => !r.status || r.status === 'solved');
+        if (validSolved.length > 0) {
+          const maxSolvedId = Math.max(...validSolved.map((r) => Number(r.level_id) || 0));
           unlockedIdx = Math.min(LEVELS.length - 1, Math.max(0, maxSolvedId));
           localStorage.setItem(`hoc_unlocked_idx_${id}`, String(unlockedIdx));
         }
@@ -227,10 +258,12 @@ export default function App() {
       setSessionEndOpen(true);
       setIsTimerRunning(false);
     } else if (!isDone) {
+      setSessionEndOpen(false);
       setWelcomeOpen(false);
       setPretestOpen(true);
       setIsTimerRunning(false);
     } else {
+      setSessionEndOpen(false);
       setIsTimerRunning(true);
     }
   };
@@ -293,8 +326,14 @@ export default function App() {
     if (participantId) {
       try {
         const stored = JSON.parse(localStorage.getItem(`hoc_minute_logs_${participantId}`) || '[]');
-        stored.forEach((r) => loggedMinutesRef.current.add(r.minute_number));
+        loggedMinutesRef.current = new Set(stored.map((r) => r.minute_number));
         setMinuteLogsData(stored);
+        const storedHistory = JSON.parse(
+          localStorage.getItem(`hoc_checkin_history_${participantId}`) ||
+          localStorage.getItem('hoc_checkin_history') ||
+          '[]'
+        );
+        setHistoryData(storedHistory);
       } catch {}
     }
   }, [participantId]);
@@ -309,6 +348,7 @@ export default function App() {
   const mazeRendererRef = useRef(null);
   const workspaceInstanceRef = useRef(null);
   const runCanceledRef = useRef(false);
+  const advanceTimeoutRef = useRef(null);
 
   // Toast Notification helper
   const showToast = (message) => {
@@ -404,11 +444,21 @@ export default function App() {
     };
   }, []);
 
+  // Cancel any active workspace drag when a modal opens so floating blocks never overlap modals
+  useEffect(() => {
+    if (checkinOpen || sessionEndOpen || pretestOpen || posttestOpen || loginOpen || welcomeOpen) {
+      workspaceInstanceRef.current?.cancelActiveDrag(false);
+    }
+  }, [checkinOpen, sessionEndOpen, pretestOpen, posttestOpen, loginOpen, welcomeOpen]);
+
   // Initialize Engines & Load Level 0
   useEffect(() => {
     // Load check-in history from localStorage
     try {
-      const stored = localStorage.getItem('hoc_checkin_history');
+      const pid = localStorage.getItem('hoc_participant_id');
+      const stored =
+        (pid && localStorage.getItem(`hoc_checkin_history_${pid}`)) ||
+        localStorage.getItem('hoc_checkin_history');
       if (stored) setHistoryData(JSON.parse(stored));
     } catch (e) {
       console.error(e);
@@ -432,6 +482,9 @@ export default function App() {
     }
 
     return () => {
+      if (advanceTimeoutRef.current) {
+        clearTimeout(advanceTimeoutRef.current);
+      }
       if (workspaceInstanceRef.current) {
         workspaceInstanceRef.current.destroy();
       }
@@ -447,6 +500,11 @@ export default function App() {
       if (index > maxUnlockedIndexRef.current) {
         showToast('🔒 Solve the current puzzle first to unlock this level!');
         return;
+      }
+
+      if (advanceTimeoutRef.current) {
+        clearTimeout(advanceTimeoutRef.current);
+        advanceTimeoutRef.current = null;
       }
 
       // If switching to a different puzzle before solving after making attempts, log as 'skipped'
@@ -698,6 +756,10 @@ export default function App() {
     const updated = [data, ...historyData];
     setHistoryData(updated);
     try {
+      const pid = data.participantId || participantId;
+      if (pid) {
+        localStorage.setItem(`hoc_checkin_history_${pid}`, JSON.stringify(updated));
+      }
       localStorage.setItem('hoc_checkin_history', JSON.stringify(updated));
     } catch (e) {
       console.error(e);
@@ -970,6 +1032,7 @@ export default function App() {
       return;
     }
 
+    renderer.reset();
     soundFX.playLaunch();
 
     let executionStepCount = 0;
@@ -1122,6 +1185,11 @@ export default function App() {
     const outcome = await executeNodeList(tree);
     ws.highlightBlock(null);
 
+    if (outcome.stopped || runCanceledRef.current) {
+      setIsRunning(false);
+      return;
+    }
+
     if (outcome.reachedPig || renderer.hasReachedPig()) {
       minuteStatsRef.current.solved += 1;
 
@@ -1142,14 +1210,20 @@ export default function App() {
         } catch {}
       }
 
+      if (advanceTimeoutRef.current) {
+        clearTimeout(advanceTimeoutRef.current);
+      }
+
       if (nextIndex < STUDY_LEVEL_COUNT) {
         showToast(`🎉 Puzzle #${solvedLevel.id} Solved! Jumping to Puzzle #${LEVELS[nextIndex].id}...`);
-        setTimeout(() => {
+        advanceTimeoutRef.current = setTimeout(() => {
+          advanceTimeoutRef.current = null;
           loadLevel(nextIndex);
         }, 1200);
       } else if (currentLevelIndex < STUDY_LEVEL_COUNT) {
         showToast(`🏆 All ${STUDY_LEVEL_COUNT} study puzzles completed! Opening Post-Test Survey...`);
-        setTimeout(() => {
+        advanceTimeoutRef.current = setTimeout(() => {
+          advanceTimeoutRef.current = null;
           setStudyComplete(true);
           setPosttestOpen(true);
         }, 1500);
@@ -1157,6 +1231,7 @@ export default function App() {
         showToast('🏆 Bonus puzzle complete! You finished all 21 puzzles.');
       }
     } else if (outcome.crashed) {
+      setIsRunning(false);
       puzzleStatsRef.current.crashes += 1;
       if (outcome.reason === 'tnt') {
         setFeedback({
@@ -1172,6 +1247,7 @@ export default function App() {
         });
       }
     } else {
+      setIsRunning(false);
       soundFX.playFailure();
       setFeedback({
         open: true,
